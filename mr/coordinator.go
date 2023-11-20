@@ -10,6 +10,7 @@ import (
 )
 
 type Coordinator struct {
+	WorkerList []*Worker
 	MapTask    Task
 	ReduceTask Task
 }
@@ -29,7 +30,11 @@ func (c *Coordinator) Run() {
 func (c *Coordinator) Router() {
 	http.HandleFunc("/", DefaultHandler)
 	http.HandleFunc("/register", RegisterHandler)
-	//http.HandleFunc("/reduce", c.AddReduceTask)
+
+}
+
+func (c *Coordinator) Regester() {
+
 }
 
 func (c *Coordinator) server() {

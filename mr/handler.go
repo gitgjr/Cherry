@@ -36,3 +36,7 @@ func RegisterHandler(w http.ResponseWriter, req *http.Request) {
 func DefaultHandler(w http.ResponseWriter, req *http.Request) {
 	io.WriteString(w, "Hello")
 }
+
+func P2PTransmitHandler(w http.ResponseWriter, req *http.Request) {
+
+}

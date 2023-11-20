@@ -13,8 +13,8 @@ import (
 	"time"
 )
 
-var workPath = "./data"
-var port = 1115
+var DataPath = "./data"
+var WorkerPort = 1115 //Rename this to WorkerPort
 var coordinatorAddr = "localhost:8080"
 
 type Worker struct {
@@ -36,24 +36,24 @@ func NewWorker() *Worker {
 	if err != nil {
 		panic(err)
 	}
-	w.Addr = addr + ":" + strconv.Itoa(port)
+	w.Addr = addr + ":" + strconv.Itoa(WorkerPort)
 	w.TaskList = make(Task)
 	return &w
 }
 
 func (w *Worker) AddMapTask() {
-	fileList, err := utils.FindFiles(workPath, "segment", ".ts")
+	fileList, err := utils.FindFiles(DataPath, "segment", ".ts")
 	if err != nil {
 		panic(err)
 	}
 	for _, file := range fileList {
 		fMeta := FileMeta{}
 		fMeta.FileName = file
-		fMeta.FileID, err = utils.GetFileHash(workPath + "/" + file)
+		fMeta.FileID, err = utils.GetFileHash(DataPath + "/" + file)
 		if err != nil {
 			panic(err)
 		}
-		fMeta.FileSize, err = utils.FileSize(workPath + "/" + file)
+		fMeta.FileSize, err = utils.FileSize(DataPath + "/" + file)
 		if err != nil {
 			panic(err)
 		}
@@ -86,4 +86,8 @@ func (w *Worker) Regester() {
 		os.Exit(1)
 	}
 	fmt.Printf("client: response body: %s\n", resBody)
+}
+
+func (w *Worker) RunServer() {
+	http.ListenAndServe(":"+strconv.Itoa(WorkerPort), nil)
 }

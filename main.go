@@ -22,6 +22,7 @@ func main() {
 	switch arg1 {
 	case "w":
 		w := mr.NewWorker()
+		w.AddMapTask()
 		w.Regester()
 
 	case "c":
