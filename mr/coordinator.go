@@ -1,40 +1,74 @@
 package mr
 
 import (
+	"fmt"
 	"log"
 	"main/utils"
 	"net"
 	"net/http"
 	"net/rpc"
 	"os"
+	"strconv"
+	"sync"
 )
 
 type Coordinator struct {
-	WorkerList []*Worker
-	MapTask    Task
-	ReduceTask Task
+	Workers  map[string]*Worker //[workerID]*Worker
+	NWorkers int
+	Bucket
+	NMapTask    Task
+	ReduceTask  Task
+	TaskChannel chan Task
+	mutex       sync.Mutex
 }
 
-type Task map[utils.HashValue]FileMeta
+//TODO: Message service and P2P service
 
-type Bucket struct {
-	BucketID int
-	TaskList Task
+type Bucket map[int]Task //WorkerID:Task
+
+func NewCoordinator() *Coordinator {
+	c := Coordinator{}
+	c.Workers = make(map[string]*Worker)
+	return &c
 }
 
-// Boot Http server
+// Run Boot Http server
 func (c *Coordinator) Run() {
 	http.ListenAndServe(":8080", nil)
 }
 
 func (c *Coordinator) Router() {
-	http.HandleFunc("/", DefaultHandler)
-	http.HandleFunc("/register", RegisterHandler)
-
+	http.HandleFunc("/", c.DefaultHandler)
+	http.HandleFunc("/register", c.RegisterHandler)
+	http.HandleFunc("/update", c.UpdateHandler)
 }
 
-func (c *Coordinator) Regester() {
+func (c *Coordinator) PrintWorkers() {
+	for _, worker := range c.Workers {
+		fmt.Println(worker)
+	}
+}
 
+// transmit: give a worker a command to transmit receivers:WorkerID of receivers, transmitTaskID:TaskID of tasks to be transmitted
+func (c *Coordinator) transmit(sender *Worker, receivers []*Worker, transmitTaskID []utils.HashValue) {
+	for _, taskID := range transmitTaskID {
+		_, ok := sender.TaskList[taskID]
+		if ok == false {
+			log.Fatal("Task not exist")
+			return
+		}
+	}
+
+	NewTransmitTask := MakeTransmitTaskSet(receivers, transmitTaskID)
+	res, err := SendPostRequest(NewTransmitTask, "http://"+sender.Addr+":"+strconv.Itoa(WorkerPort)+"/transmit")
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(res) //TODO: Change here
+}
+
+func (c *Coordinator) DivideBucket() {
+	// TODO: If need to storage distributively
 }
 
 func (c *Coordinator) server() {
@@ -48,11 +82,6 @@ func (c *Coordinator) server() {
 		log.Fatal("listen error:", e)
 	}
 	go http.Serve(l, nil)
-}
-
-func NewCoordinator() *Coordinator {
-	c := Coordinator{}
-	return &c
 }
 
 // scanForFiles:Add files into MTask list via prefix and suffix
