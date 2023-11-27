@@ -8,12 +8,12 @@ import (
 	"os"
 )
 
-func (c *Coordinator) DefaultHandler(w http.ResponseWriter, req *http.Request) {
+func (worker *Worker) DefaultHandler(w http.ResponseWriter, req *http.Request) {
 	io.WriteString(w, "This is the default handler")
 }
 
-func (worker *Worker) DefaultHandler(w http.ResponseWriter, req *http.Request) {
-	w.WriteHeader(http.StatusNotFound)
+func (worker *Worker) CheckStateHandler(w http.ResponseWriter, req *http.Request) {
+	io.WriteString(w, "online")
 }
 
 func (worker *Worker) TransmitOrderHandler(w http.ResponseWriter, req *http.Request) {
@@ -28,6 +28,18 @@ func (worker *Worker) TransmitOrderHandler(w http.ResponseWriter, req *http.Requ
 			return
 		}
 		//Send files
+		worker.Transmit(transmitTask)
+	}
+}
+
+//------p2p------
+
+func (worker *Worker) CheckHandler(w http.ResponseWriter, req *http.Request) {
+	if req.Method != http.MethodGet {
+		fmt.Println("Only Get method is allowed")
+		w.WriteHeader(http.StatusMethodNotAllowed)
+	} else {
+		io.WriteString(w, "The link is good")
 	}
 }
 

@@ -22,16 +22,26 @@ func main() {
 	switch arg1 {
 	case "w":
 		w := mr.NewWorker()
+		w.Addr = mr.LocalAddr
 		w.AddMapTask()
 		w.Regester()
-		//w.Update() //test good
+		// w.Update() //test good
 
+		// w.CheckP2PConnect(":1116") //test good
+
+		counter := 0
 		newTransmitTask := mr.TransmitTaskSet{}
 		for k, _ := range w.TaskList {
-			newTransmitTask["localhost:1116"] = append(newTransmitTask["localhost:1116"], k)
+			if counter == 0 {
+				newTransmitTask["localhost:1116"] = append(newTransmitTask["localhost:1116"], k)
+			} else {
+				newTransmitTask["localhost:1117"] = append(newTransmitTask["localhost:1117"], k)
+			}
+			counter++
 		}
-		w.Transmit(newTransmitTask)
+		w.Transmit(newTransmitTask) //test good
 
+		w.Router()
 		w.Run()
 
 	case "c":
@@ -40,15 +50,20 @@ func main() {
 		c.Run()
 	case "w2":
 		w2 := mr.NewWorker()
+		w2.Addr = mr.LocalAddr
 		w2.Port = 1116
 		w2.Regester()
+		w2.Router()
 		w2.Run()
-
+	case "w3":
+		w3 := mr.NewWorker()
+		w3.Addr = mr.LocalAddr
+		w3.Port = 1117
+		w3.Regester()
+		w3.Router()
+		w3.Run()
 	}
 
-	//c := mr.Coordinator{}
-	//c.Router()
-	//c.Run()
 }
 
 //TODO: If online test:1. Change workerAddr to public IP 2. Change coordinatorAddr to public IP

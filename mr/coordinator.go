@@ -8,18 +8,18 @@ import (
 	"net/http"
 	"net/rpc"
 	"os"
-	"strconv"
 	"sync"
+	"time"
 )
 
 type Coordinator struct {
 	Workers  map[string]*Worker //[workerID]*Worker
 	NWorkers int
 	Bucket
-	NMapTask    Task
-	ReduceTask  Task
-	TaskChannel chan Task
-	mutex       sync.Mutex
+	NMapTask   Task
+	ReduceTask Task
+	// TaskChannel chan Task
+	mutex sync.Mutex
 }
 
 //TODO: Message service and P2P service
@@ -41,12 +41,52 @@ func (c *Coordinator) Router() {
 	http.HandleFunc("/", c.DefaultHandler)
 	http.HandleFunc("/register", c.RegisterHandler)
 	http.HandleFunc("/update", c.UpdateHandler)
+	http.HandleFunc("/callTransmit", c.callTransmitHandler)
 }
 
 func (c *Coordinator) PrintWorkers() {
 	for _, worker := range c.Workers {
-		fmt.Println(worker)
+		utils.PrintStruct(worker)
 	}
+}
+
+// CheckWorkers: check and update the state of workers
+func (c *Coordinator) CheckWorkers() {
+	var wg sync.WaitGroup
+	for workerID := range c.Workers {
+		wg.Add(1)
+		go func(wid string) {
+			defer wg.Done()
+			err := c.sendCheckAndUpdate(wid)
+			fmt.Println(err)
+
+		}(workerID)
+	}
+	wg.Wait()
+	// c.PrintWorkers()
+}
+
+func (c *Coordinator) sendCheckAndUpdate(workerID string) error {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+	targetWorker := c.Workers[workerID]
+	res, err := http.Get(utils.SpliceUrl(targetWorker.Addr, targetWorker.Port, "checkState"))
+	if err != nil {
+		c.Workers[workerID].State = "offline"
+		return err
+	}
+	if res.StatusCode != http.StatusOK {
+		c.Workers[workerID].State = "offline"
+		return nil
+	}
+	c.Workers[workerID].State = "online"
+	c.Workers[workerID].LastOnlie = time.Now()
+	return nil
+
+}
+
+func (c *Coordinator) AssignTask() {
+
 }
 
 // transmit: give a worker a command to transmit receivers:WorkerID of receivers, transmitTaskID:TaskID of tasks to be transmitted
@@ -60,7 +100,7 @@ func (c *Coordinator) transmit(sender *Worker, receivers []*Worker, transmitTask
 	}
 
 	NewTransmitTask := MakeTransmitTaskSet(receivers, transmitTaskID)
-	res, err := SendPostRequest(NewTransmitTask, "http://"+sender.Addr+":"+strconv.Itoa(WorkerPort)+"/transmit")
+	res, err := SendPostRequest(NewTransmitTask, utils.SpliceUrl(sender.Addr, sender.Port, "transmit"))
 	if err != nil {
 		log.Fatal(err)
 	}

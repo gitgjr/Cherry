@@ -18,3 +18,6 @@
 .idea/
 
 /temp/
+.vscode/
+
+.DS_Store

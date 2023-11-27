@@ -7,6 +7,10 @@ import (
 	"net/http"
 )
 
+func (c *Coordinator) DefaultHandler(w http.ResponseWriter, req *http.Request) {
+	io.WriteString(w, "This is the default handler")
+}
+
 func UploadHandler(w http.ResponseWriter, req *http.Request) {
 	if req.Method == http.MethodGet {
 		fmt.Println("i haven`t design get")
@@ -52,5 +56,23 @@ func (c *Coordinator) UpdateHandler(w http.ResponseWriter, req *http.Request) {
 		c.Workers[updateWorker.WorkerID] = &updateWorker
 		//fmt.Println(updateWorker)
 		io.WriteString(w, "update worker success")
+	}
+}
+
+// Map phrase
+// 1.Check online worker
+// 2.Assign task
+// 3.Send task
+func (c *Coordinator) callTransmitHandler(w http.ResponseWriter, req *http.Request) {
+	if req.Method != http.MethodGet {
+		fmt.Println("Only Get method is allowed")
+		w.WriteHeader(http.StatusMethodNotAllowed)
+	} else {
+		c.CheckWorkers() //test good
+
+		// for k,v:=range c.Workers{
+		// 	c.transmit()
+		// }
+
 	}
 }
