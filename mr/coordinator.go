@@ -77,14 +77,24 @@ func (c *Coordinator) returnOnlineWorker() ([]string, []*Worker) {
 // AssignWork : Some method to assign task:1.if worker get this task assgin
 // 2.Equally distributed according to the number of workers
 // 3.Assign based on worker connections on the basis of 2
-func (c *Coordinator) AssignReduceTask() TransmitTask {
+func (c *Coordinator) AssignReduceTask() ReduceTaskSet {
 	_, onlineWorkerList := c.returnOnlineWorker() //[WorkerID]
-	newTransmitTaskSet := c.assginTaskM1(onlineWorkerList)
+	newTransmitTaskSet := c.assignTaskM1(onlineWorkerList)
 	return newTransmitTaskSet
 }
 
-func (c *Coordinator) assginTaskM1(onlineList []*Worker) ReduecTaskSet {
-
+func (c *Coordinator) assignTaskM1(onlineList []*Worker) ReduceTaskSet {
+	r := make(ReduceTaskSet)
+	for _, worker := range onlineList {
+		for taskID, _ := range c.allTask {
+			_, workerOk := worker.TaskList[taskID]
+			_, added := r[string(taskID)]
+			if !added && workerOk {
+				r[worker.WorkerID] = append(r[worker.WorkerID], taskID)
+			}
+		}
+	}
+	return r
 }
 
 // CheckWorkers: check and update the state of workers
@@ -125,6 +135,7 @@ func (c *Coordinator) sendCheckAndUpdate(workerID string) error {
 // transmit: give a worker a command to transmit receivers:WorkerID of receivers,
 // transmitTaskID:TaskID of tasks to be transmitted
 func (c *Coordinator) transmit(sender *Worker, tTask TransmitTask) {
+	//check if task exist
 	for _, taskIDList := range tTask {
 		for _, taskID := range taskIDList {
 			_, ok := sender.TaskList[taskID]

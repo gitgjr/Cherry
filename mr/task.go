@@ -12,10 +12,10 @@ type Task map[utils.HashValue]FileMeta //taskID : fileMeta
 // worker1.addr:[task1,task2],worker2.addr:[task3,task4]
 type TransmitTask map[string][]utils.HashValue
 
-// WorkerAddr:[]TaskID,let multiple  workers to send their files one worker
+// WorkerID:[]TaskID,let multiple  workers to send their files one worker
 // give multiple sender a list :sender.addr:[]TaskID ,set means it needs to be divided into several TransmitTask
 // worker1.addr:[task1,task2],worker2.addr:[task3,task4]
-type ReduecTaskSet map[string][]utils.HashValue
+type ReduceTaskSet map[string][]utils.HashValue
 
 type SingleTransmitTask struct {
 	TaskID utils.HashValue

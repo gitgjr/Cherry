@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"main/utils"
 	"net/http"
 )
 
@@ -64,13 +65,28 @@ func (c *Coordinator) UpdateHandler(w http.ResponseWriter, req *http.Request) {
 // 2.Assign task
 // 3.Send task
 func (c *Coordinator) callTransmitHandler(w http.ResponseWriter, req *http.Request) {
-	if req.Method != http.MethodGet {
-		fmt.Println("Only Get method is allowed")
+	if req.Method != http.MethodPost {
+		fmt.Println("Only Post method is allowed")
 		w.WriteHeader(http.StatusMethodNotAllowed)
 	} else {
+		var requestWorker Worker
+		err := json.NewDecoder(req.Body).Decode(&requestWorker)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
 		c.CheckWorkers() //test good
-		// transmitSet := c.AssignReduceTask()
-		// c.transmit(transmitSet)
+		taskSet := c.AssignReduceTask()
+		for senderID, taskList := range taskSet {
+			//create transmit task
+			go func(sID string, task []utils.HashValue) {
+				newTransmitTask := make(TransmitTask)
+				newTransmitTask[requestWorker.WorkerID] = task
+				//send order
+				c.transmit(c.Workers[sID], newTransmitTask)
+			}(senderID, taskList)
+
+		}
 
 		// for k,v:=range c.Workers{
 		// 	c.transmit()

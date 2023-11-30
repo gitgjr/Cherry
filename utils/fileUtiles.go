@@ -1,8 +1,10 @@
 package utils
 
 import (
+	"main/mr"
 	"os"
 	"path/filepath"
+	"time"
 )
 
 func FileSize(filePath string) (int, error) {
@@ -47,6 +49,24 @@ func hasPrefix(s, prefix string) bool {
 
 func hasSuffix(s, suffix string) bool {
 	return len(s) >= len(suffix) && s[len(s)-len(suffix):] == suffix
+}
+
+func FileToFileMeta(file string) (*mr.FileMeta, error) {
+	fMeta := mr.FileMeta{}
+	fMeta.FileName = file
+	fMeta.Location = mr.DataPath + "/" + file
+	var err error
+	fMeta.FileID, err = GetFileHash(fMeta.Location)
+	if err != nil {
+		return nil, err
+	}
+	fMeta.FileSize, err = FileSize(fMeta.Location)
+	if err != nil {
+		return nil, err
+	}
+
+	fMeta.UploadTime = time.Now().Format("2006-01-02 15:04:05")
+	return &fMeta, nil
 }
 
 func DeleteTempFile() {}

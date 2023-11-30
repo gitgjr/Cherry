@@ -24,7 +24,7 @@ func main() {
 		w := mr.NewWorker()
 		w.Addr = mr.LocalAddr
 		w.AddMapTask()
-		w.Regester()
+		w.Register()
 		// w.Update() //test good
 
 		// w.CheckP2PConnect(":1116") //test good
@@ -48,20 +48,26 @@ func main() {
 		c := mr.NewCoordinator()
 		c.Router()
 		c.Run()
-	case "w2":
+	case "w2": //empty worker
 		w2 := mr.NewWorker()
 		w2.Addr = mr.LocalAddr
 		w2.Port = 1116
-		w2.Regester()
+		w2.Register()
 		w2.Router()
 		w2.Run()
-	case "w3":
+	case "w3": //empty worker
 		w3 := mr.NewWorker()
 		w3.Addr = mr.LocalAddr
 		w3.Port = 1117
-		w3.Regester()
+		w3.Register()
 		w3.Router()
 		w3.Run()
+	case "w4": //worker with part of task,simulate mapped worker
+		w4 := mr.NewWorker()
+		w4.Addr = mr.LocalAddr
+		w4.Port = 1118
+		w4.AddMapTask()
+		delete(w4.TaskList, w4.TaskList)
 	}
 
 }

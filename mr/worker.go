@@ -68,27 +68,35 @@ func NewWorker() *Worker {
 	return &w
 }
 
-func (w *Worker) AddMapTask() {
-	fileList, err := utils.FindFiles(DataPath, "segment", ".ts")
-	if err != nil {
-		panic(err)
-	}
-	for _, file := range fileList {
-		fMeta := FileMeta{}
-		fMeta.FileName = file
-		fMeta.Location = DataPath + "/" + file
-		fMeta.FileID, err = utils.GetFileHash(fMeta.Location)
+// if filename=="",add all files,else add the file
+func (w *Worker) AddMapTask(fileName []string) {
+	if len(fileName) == 0 {
+		fileList, err := utils.FindFiles(DataPath, "segment", ".ts")
 		if err != nil {
 			panic(err)
 		}
-		fMeta.FileSize, err = utils.FileSize(fMeta.Location)
-		if err != nil {
-			panic(err)
-		}
+		for _, file := range fileList {
+			fMeta, err := utils.FileToFileMeta(file)
+			if err != nil {
+				panic(err)
+			}
 
-		fMeta.UploadTime = time.Now().Format("2006-01-02 15:04:05")
-		w.TaskList[fMeta.FileID] = fMeta
+			w.TaskList[fMeta.FileID] = *fMeta
+		}
+	} else {
+		for _, file := range fileName {
+			fMeta, err := utils.FileToFileMeta(file)
+			if err != nil {
+				panic(err)
+			}
+			w.TaskList[fMeta.FileID] = *fMeta
+		}
 	}
+
+}
+
+func fileToTask() {
+
 }
 
 func (w *Worker) readResponse(res *http.Response) {
@@ -109,7 +117,7 @@ func (w *Worker) checkTask(taskID utils.HashValue) bool {
 
 //--------C/S--------
 
-func (w *Worker) Regester() {
+func (w *Worker) Register() {
 	//res, err := http.NewRequest(http.MethodGet, CoordinatorAddr+"/register", nil)
 
 	res, err := SendPostRequest(w, utils.SpliceUrl(CoordinatorAddr, CoordinatorPort, "register"))
@@ -128,9 +136,9 @@ func (w *Worker) Update() {
 	w.readResponse(res)
 }
 
-// Since map phrase is auto,it is call for Reduce
+// CallReduce Since map phrase is auto,it is call for Reduce
 func (w *Worker) CallReduce() {
-	res, err := http.Get(utils.SpliceUrl(CoordinatorAddr, CoordinatorPort, "callReduce"))
+	res, err := SendPostRequest(w, utils.SpliceUrl(CoordinatorAddr, CoordinatorPort, "callReduce"))
 	if err != nil {
 		panic(err)
 	}
@@ -147,7 +155,7 @@ func (w *Worker) CheckP2PConnect(targetAddr string) {
 	w.readResponse(res)
 }
 
-// SendTask :send a single file to target worker by reading the whole file in memory
+// sendTask send a single file to target worker by reading the whole file in memory
 func (w *Worker) sendTask(taskID utils.HashValue, targetAddr string) (*http.Response, error) {
 	file, err := os.Open(w.TaskList[taskID].Location)
 	if err != nil {
@@ -203,26 +211,6 @@ func (w *Worker) Transmit(tasks TransmitTask) {
 				}
 			}
 		}(workerAddr, files)
-
-		// for _, file := range files {
-		// 	_, ok := w.TaskList[file]
-		// 	if ok == false {
-		// 		fmt.Println("File not exist, send update to coordinator")
-		// 		w.Update()
-		// 		return
-		// 	}
-		// 	//Send the file to the worker
-
-		// 	res, err := w.sendTask(file, workerAddr)
-		// 	if err != nil {
-		// 		log.Fatal(err)
-		// 		return
-		// 	} else {
-		// 		//Write file
-		// 		fmt.Println(res)
-		// 		continue
-		// 	}
-		// }
 
 	}
 	wg.Wait()
