@@ -128,8 +128,9 @@ func (w *Worker) Update() {
 	w.readResponse(res)
 }
 
-func (w *Worker) CallTransmit() {
-	res, err := http.Get(utils.SpliceUrl(CoordinatorAddr, CoordinatorPort, "callTransmit"))
+// Since map phrase is auto,it is call for Reduce
+func (w *Worker) CallReduce() {
+	res, err := http.Get(utils.SpliceUrl(CoordinatorAddr, CoordinatorPort, "callReduce"))
 	if err != nil {
 		panic(err)
 	}
@@ -170,7 +171,7 @@ func (w *Worker) sendTask(taskID utils.HashValue, targetAddr string) (*http.Resp
 // Two methods to transmit:
 // 1. Read and send a file one by one
 // 2. Use Multipart send some files which divided into chunks in a same time
-func (w *Worker) Transmit(tasks TransmitTaskSet) {
+func (w *Worker) Transmit(tasks TransmitTask) {
 	fmt.Println("Transmitting")
 	var wg sync.WaitGroup
 	for workerAddr := range tasks {

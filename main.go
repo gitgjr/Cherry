@@ -29,17 +29,17 @@ func main() {
 
 		// w.CheckP2PConnect(":1116") //test good
 
-		counter := 0
-		newTransmitTask := mr.TransmitTaskSet{}
-		for k, _ := range w.TaskList {
-			if counter == 0 {
-				newTransmitTask["localhost:1116"] = append(newTransmitTask["localhost:1116"], k)
-			} else {
-				newTransmitTask["localhost:1117"] = append(newTransmitTask["localhost:1117"], k)
-			}
-			counter++
-		}
-		w.Transmit(newTransmitTask) //test good
+		// counter := 0
+		// newTransmitTask := mr.TransmitTaskSet{}
+		// for k, _ := range w.TaskList {
+		// 	if counter == 0 {
+		// 		newTransmitTask["localhost:1116"] = append(newTransmitTask["localhost:1116"], k)
+		// 	} else {
+		// 		newTransmitTask["localhost:1117"] = append(newTransmitTask["localhost:1117"], k)
+		// 	}
+		// 	counter++
+		// }
+		// w.Transmit(newTransmitTask) //test good
 
 		w.Router()
 		w.Run()

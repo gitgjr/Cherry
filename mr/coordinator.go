@@ -16,8 +16,8 @@ type Coordinator struct {
 	Workers  map[string]*Worker //[workerID]*Worker
 	NWorkers int
 	Bucket
-	NMapTask   Task
-	ReduceTask Task
+	NMapTask Task
+	allTask  Task //all tasks
 	// TaskChannel chan Task
 	mutex sync.Mutex
 }
@@ -29,6 +29,7 @@ type Bucket map[int]Task //WorkerID:Task
 func NewCoordinator() *Coordinator {
 	c := Coordinator{}
 	c.Workers = make(map[string]*Worker)
+	c.allTask = make(Task)
 	return &c
 }
 
@@ -41,13 +42,49 @@ func (c *Coordinator) Router() {
 	http.HandleFunc("/", c.DefaultHandler)
 	http.HandleFunc("/register", c.RegisterHandler)
 	http.HandleFunc("/update", c.UpdateHandler)
-	http.HandleFunc("/callTransmit", c.callTransmitHandler)
+	http.HandleFunc("/callReduce", c.callTransmitHandler)
 }
 
 func (c *Coordinator) PrintWorkers() {
 	for _, worker := range c.Workers {
 		utils.PrintStruct(worker)
 	}
+}
+
+// ScanAllTask:Scan all registered creator and add all the task they hold into allTask
+func (c *Coordinator) ScanAllTask() {
+	for _, w := range c.Workers {
+		err := MergeTasks(c.allTask, w.TaskList)
+		if err != nil {
+			panic(err)
+		}
+	}
+
+}
+
+func (c *Coordinator) returnOnlineWorker() ([]string, []*Worker) {
+	onlineIDList := []string{}
+	onlineWorkerList := []*Worker{}
+	for id, w := range c.Workers {
+		if w.State == "online" {
+			onlineIDList = append(onlineIDList, id)
+			onlineWorkerList = append(onlineWorkerList, w)
+		}
+	}
+	return onlineIDList, onlineWorkerList
+}
+
+// AssignWork : Some method to assign task:1.if worker get this task assgin
+// 2.Equally distributed according to the number of workers
+// 3.Assign based on worker connections on the basis of 2
+func (c *Coordinator) AssignReduceTask() TransmitTask {
+	_, onlineWorkerList := c.returnOnlineWorker() //[WorkerID]
+	newTransmitTaskSet := c.assginTaskM1(onlineWorkerList)
+	return newTransmitTaskSet
+}
+
+func (c *Coordinator) assginTaskM1(onlineList []*Worker) ReduecTaskSet {
+
 }
 
 // CheckWorkers: check and update the state of workers
@@ -85,22 +122,19 @@ func (c *Coordinator) sendCheckAndUpdate(workerID string) error {
 
 }
 
-func (c *Coordinator) AssignTask() {
-
-}
-
-// transmit: give a worker a command to transmit receivers:WorkerID of receivers, transmitTaskID:TaskID of tasks to be transmitted
-func (c *Coordinator) transmit(sender *Worker, receivers []*Worker, transmitTaskID []utils.HashValue) {
-	for _, taskID := range transmitTaskID {
-		_, ok := sender.TaskList[taskID]
-		if ok == false {
-			log.Fatal("Task not exist")
-			return
+// transmit: give a worker a command to transmit receivers:WorkerID of receivers,
+// transmitTaskID:TaskID of tasks to be transmitted
+func (c *Coordinator) transmit(sender *Worker, tTask TransmitTask) {
+	for _, taskIDList := range tTask {
+		for _, taskID := range taskIDList {
+			_, ok := sender.TaskList[taskID]
+			if ok == false {
+				panic("task not found" + taskID)
+			}
 		}
-	}
 
-	NewTransmitTask := MakeTransmitTaskSet(receivers, transmitTaskID)
-	res, err := SendPostRequest(NewTransmitTask, utils.SpliceUrl(sender.Addr, sender.Port, "transmit"))
+	}
+	res, err := SendPostRequest(tTask, utils.SpliceUrl(sender.Addr, sender.Port, "transmit"))
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -59,7 +59,7 @@ func (c *Coordinator) UpdateHandler(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
-// Map phrase
+// Reduce phrase
 // 1.Check online worker
 // 2.Assign task
 // 3.Send task
@@ -69,6 +69,8 @@ func (c *Coordinator) callTransmitHandler(w http.ResponseWriter, req *http.Reque
 		w.WriteHeader(http.StatusMethodNotAllowed)
 	} else {
 		c.CheckWorkers() //test good
+		// transmitSet := c.AssignReduceTask()
+		// c.transmit(transmitSet)
 
 		// for k,v:=range c.Workers{
 		// 	c.transmit()
