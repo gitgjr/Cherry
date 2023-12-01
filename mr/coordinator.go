@@ -17,8 +17,7 @@ type Coordinator struct {
 	Workers  map[string]*Worker //[workerID]*Worker
 	NWorkers int
 	Bucket
-	NMapTask Task
-	allTask  Task //all tasks
+	allTask Task //all tasks from registered worker
 	// TaskChannel chan Task
 	mutex sync.Mutex
 }
@@ -54,6 +53,8 @@ func (c *Coordinator) PrintWorkers() {
 
 // ScanAllTask:Scan all registered creator and add all the task they hold into allTask
 func (c *Coordinator) ScanAllTask() {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
 	for _, w := range c.Workers {
 		err := MergeTasks(c.allTask, w.TaskList)
 		if err != nil {
@@ -79,6 +80,7 @@ func (c *Coordinator) returnOnlineWorker() ([]string, []*Worker) {
 // 2.Equally distributed according to the number of workers
 // 3.Assign based on worker connections on the basis of 2
 func (c *Coordinator) AssignReduceTask() ReduceTaskSet {
+	c.ScanAllTask()
 	_, onlineWorkerList := c.returnOnlineWorker() //[WorkerID]
 	newTransmitTaskSet := c.assignTaskM1(onlineWorkerList)
 	return newTransmitTaskSet

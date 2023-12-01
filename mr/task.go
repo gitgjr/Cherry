@@ -44,7 +44,7 @@ func MakeTransmitTask(receivers []*Worker, transmitTaskID []hash.HashValue) Tran
 // MergeTasks: Merge m2 to m1,return error when they have same keys
 func MergeTasks(m1 Task, m2 Task) error {
 	for k, v := range m2 {
-		if _, ok := m1[k]; !ok {
+		if _, ok := m1[k]; ok {
 			return errors.New("hash conflict, two hashmap have same key")
 		}
 		m1[k] = v

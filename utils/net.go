@@ -3,7 +3,6 @@ package utils
 import (
 	"fmt"
 	"net"
-	"strconv"
 	"strings"
 )
 
@@ -19,6 +18,6 @@ func GetOutBoundIP() (ip string, err error) {
 	return
 }
 
-func SpliceUrl(addr string, port int, request string) string {
-	return "http://" + addr + ":" + strconv.Itoa(port) + "/" + request
+func SpliceUrl(addr string, port string, request string) string {
+	return "http://" + addr + ":" + port + "/" + request
 }

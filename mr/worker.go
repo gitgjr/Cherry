@@ -20,11 +20,11 @@ var rootPath = utils.RootPath()
 var DataPath = rootPath + "/data"
 var TempPath = rootPath + "/temp"
 var LocalAddr = "localhost"
-var WorkerPort = 1115 //Rename this to WorkerPort
+var WorkerPort = "1115 " //Rename this to WorkerPort
 
 var WorkerAddr = LocalAddr
 var CoordinatorAddr = LocalAddr
-var CoordinatorPort = 8080
+var CoordinatorPort = "8080"
 
 // addr, err := utils.GetOutBoundIP() //For online test
 // if err != nil {
@@ -34,8 +34,8 @@ var CoordinatorPort = 8080
 type Worker struct {
 	WorkerID string
 	Addr     string
+	Port     string
 	TaskList Task
-	Port     int
 	mutex    sync.Mutex
 	//only for coordinator
 	State      string //online , offline
@@ -49,7 +49,7 @@ func newID() string {
 }
 
 func (w *Worker) Run() {
-	http.ListenAndServe(":"+strconv.Itoa(w.Port), nil)
+	http.ListenAndServe(":"+w.Port, nil)
 }
 
 func (w *Worker) Router() {
@@ -65,10 +65,9 @@ func (w *Worker) Router() {
 func NewWorker() *Worker {
 	w := Worker{}
 	w.WorkerID = newID()
-
 	w.Addr = WorkerAddr
-	w.TaskList = make(Task)
 	w.Port = WorkerPort
+	w.TaskList = make(Task)
 	return &w
 }
 

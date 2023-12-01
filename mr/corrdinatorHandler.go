@@ -25,16 +25,13 @@ func (c *Coordinator) RegisterHandler(w http.ResponseWriter, req *http.Request) 
 		fmt.Println("Only post method is allowed")
 		w.WriteHeader(http.StatusMethodNotAllowed)
 	} else {
-		c.mutex.Lock()
-		defer c.mutex.Unlock()
-
 		var newWorker Worker
 		err := json.NewDecoder(req.Body).Decode(&newWorker)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
-		c.Workers[newWorker.WorkerID] = &newWorker
+		c.addWorker(&newWorker)
 		//fmt.Println(newWorker)
 		io.WriteString(w, "register worker success")
 	}
@@ -45,8 +42,6 @@ func (c *Coordinator) UpdateHandler(w http.ResponseWriter, req *http.Request) {
 		fmt.Println("Only put method is allowed")
 		w.WriteHeader(http.StatusMethodNotAllowed)
 	} else {
-		c.mutex.Lock()
-		defer c.mutex.Unlock()
 
 		var updateWorker Worker
 		err := json.NewDecoder(req.Body).Decode(&updateWorker)
@@ -54,10 +49,17 @@ func (c *Coordinator) UpdateHandler(w http.ResponseWriter, req *http.Request) {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
-		c.Workers[updateWorker.WorkerID] = &updateWorker
+		c.addWorker(&updateWorker)
 		//fmt.Println(updateWorker)
 		io.WriteString(w, "update worker success")
 	}
+}
+
+// addWorker add or update worker list of coordinator
+func (c *Coordinator) addWorker(newWorker *Worker) {
+	c.mutex.Lock()
+	c.Workers[newWorker.WorkerID] = newWorker
+	c.mutex.Unlock()
 }
 
 // Reduce phrase
@@ -76,16 +78,16 @@ func (c *Coordinator) callTransmitHandler(w http.ResponseWriter, req *http.Reque
 			return
 		}
 		c.CheckWorkers() //test good
+		// c.PrintWorkers() //worker good
 		taskSet := c.AssignReduceTask()
 		for senderID, taskList := range taskSet {
-			//create transmit task
+			//create transmit task reduceTask to transmitTask and send order
 			go func(sID string, task []hash.HashValue) {
 				newTransmitTask := make(TransmitTask)
-				newTransmitTask[requestWorker.WorkerID] = task
+				newTransmitTask[requestWorker.Addr+":"+requestWorker.Port] = task
 				//send order
 				c.transmit(c.Workers[sID], newTransmitTask)
 			}(senderID, taskList)
-
 		}
 		io.WriteString(w, "accept reduce")
 		// for k,v:=range c.Workers{

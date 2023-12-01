@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"main/hash"
+	"main/meta"
 	"net/http"
 	"os"
 )
@@ -62,7 +64,7 @@ func (worker *Worker) TransmitHandler(w http.ResponseWriter, req *http.Request) 
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
-		tempFilePath := "temp" + "/" + transmitTask.FMeta.FileName
+		tempFilePath := TempPath + "/" + transmitTask.FMeta.FileName
 		file, err := os.Create(tempFilePath)
 		defer file.Close()
 		if err != nil {
@@ -77,14 +79,19 @@ func (worker *Worker) TransmitHandler(w http.ResponseWriter, req *http.Request) 
 			panic(err)
 		}
 		if checksumResult == false {
-			fmt.Println("checksum failed")
-			return
+			panic("checksum failed")
 		}
-		worker.TaskList[transmitTask.TaskID] = transmitTask.FMeta
+		worker.updateTaskList(transmitTask.TaskID, transmitTask.FMeta)
 		//copy to data folder
-		err = os.WriteFile("data"+"/"+"new-"+transmitTask.FMeta.FileName, transmitTask.FData, 0644)
+		err = os.WriteFile(DataPath+"/"+"new-"+transmitTask.FMeta.FileName, transmitTask.FData, 0644)
 		if err != nil {
 			panic(err)
 		}
 	}
+}
+
+func (worker *Worker) updateTaskList(taskID hash.HashValue, fileMeta meta.FileMeta) {
+	worker.mutex.Lock()
+	worker.TaskList[taskID] = fileMeta
+	worker.mutex.Unlock()
 }
