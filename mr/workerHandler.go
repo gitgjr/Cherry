@@ -28,6 +28,7 @@ func (worker *Worker) TransmitOrderHandler(w http.ResponseWriter, req *http.Requ
 			return
 		}
 		//Send files
+		io.WriteString(w, "transmit order accept,transmitting via p2p")
 		worker.Transmit(transmitTask)
 	}
 }

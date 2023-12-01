@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"main/utils"
+	"main/hash"
 	"net/http"
 )
 
@@ -79,7 +79,7 @@ func (c *Coordinator) callTransmitHandler(w http.ResponseWriter, req *http.Reque
 		taskSet := c.AssignReduceTask()
 		for senderID, taskList := range taskSet {
 			//create transmit task
-			go func(sID string, task []utils.HashValue) {
+			go func(sID string, task []hash.HashValue) {
 				newTransmitTask := make(TransmitTask)
 				newTransmitTask[requestWorker.WorkerID] = task
 				//send order
@@ -87,7 +87,7 @@ func (c *Coordinator) callTransmitHandler(w http.ResponseWriter, req *http.Reque
 			}(senderID, taskList)
 
 		}
-
+		io.WriteString(w, "accept reduce")
 		// for k,v:=range c.Workers{
 		// 	c.transmit()
 		// }

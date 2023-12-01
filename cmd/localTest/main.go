@@ -23,7 +23,7 @@ func main() {
 	case "w":
 		w := mr.NewWorker()
 		w.Addr = mr.LocalAddr
-		w.AddMapTask()
+		w.AddMapTask(nil)
 		w.Register()
 		// w.Update() //test good
 
@@ -48,14 +48,14 @@ func main() {
 		c := mr.NewCoordinator()
 		c.Router()
 		c.Run()
-	case "w2": //empty worker
+	case "w2": //empty worker for p2p test
 		w2 := mr.NewWorker()
 		w2.Addr = mr.LocalAddr
 		w2.Port = 1116
 		w2.Register()
 		w2.Router()
 		w2.Run()
-	case "w3": //empty worker
+	case "w3": //empty worker for p2p test
 		w3 := mr.NewWorker()
 		w3.Addr = mr.LocalAddr
 		w3.Port = 1117
@@ -66,8 +66,29 @@ func main() {
 		w4 := mr.NewWorker()
 		w4.Addr = mr.LocalAddr
 		w4.Port = 1118
-		w4.AddMapTask()
-		delete(w4.TaskList, w4.TaskList)
+		taskList := []string{"segment000.ts"}
+		w4.AddMapTask(taskList)
+		w4.Register()
+		w4.Router()
+		w4.Run()
+	case "w5": //worker with part of task,simulate mapped worker
+		w5 := mr.NewWorker()
+		w5.Addr = mr.LocalAddr
+		w5.Port = 1119
+		taskList := []string{"segment001.ts"}
+		w5.AddMapTask(taskList)
+		w5.Register()
+		w5.Router()
+		w5.Run()
+	case "w6": //empty worker for reduce ,this worker call reduce
+		w6 := mr.NewWorker()
+		w6.Addr = mr.LocalAddr
+		w6.Port = 1120
+		w6.Register()
+		w6.Router()
+		go w6.CallReduce()
+		w6.Run()
+
 	}
 
 }

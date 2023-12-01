@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"main/hash"
+	"main/httpRequest"
+	"main/meta"
 	"main/utils"
 	"math/rand"
 	"net/http"
@@ -13,8 +16,9 @@ import (
 	"time"
 )
 
-var DataPath = "./data"
-var TempPath = "./temp"
+var rootPath = utils.RootPath()
+var DataPath = rootPath + "/data"
+var TempPath = rootPath + "/temp"
 var LocalAddr = "localhost"
 var WorkerPort = 1115 //Rename this to WorkerPort
 
@@ -34,8 +38,8 @@ type Worker struct {
 	Port     int
 	mutex    sync.Mutex
 	//only for coordinator
-	State     string //online , offline
-	LastOnlie time.Time
+	State      string //online , offline
+	LastOnline time.Time
 }
 
 func newID() string {
@@ -76,7 +80,7 @@ func (w *Worker) AddMapTask(fileName []string) {
 			panic(err)
 		}
 		for _, file := range fileList {
-			fMeta, err := utils.FileToFileMeta(file)
+			fMeta, err := meta.FileToFileMeta(file, DataPath+"/"+file)
 			if err != nil {
 				panic(err)
 			}
@@ -85,17 +89,13 @@ func (w *Worker) AddMapTask(fileName []string) {
 		}
 	} else {
 		for _, file := range fileName {
-			fMeta, err := utils.FileToFileMeta(file)
+			fMeta, err := meta.FileToFileMeta(file, DataPath+"/"+file)
 			if err != nil {
 				panic(err)
 			}
 			w.TaskList[fMeta.FileID] = *fMeta
 		}
 	}
-
-}
-
-func fileToTask() {
 
 }
 
@@ -108,7 +108,7 @@ func (w *Worker) readResponse(res *http.Response) {
 	fmt.Printf("client: response body: %s\n", resBody)
 }
 
-func (w *Worker) checkTask(taskID utils.HashValue) bool {
+func (w *Worker) checkTask(taskID hash.HashValue) bool {
 	w.mutex.Lock()
 	defer w.mutex.Unlock()
 	_, ok := w.TaskList[taskID]
@@ -120,7 +120,7 @@ func (w *Worker) checkTask(taskID utils.HashValue) bool {
 func (w *Worker) Register() {
 	//res, err := http.NewRequest(http.MethodGet, CoordinatorAddr+"/register", nil)
 
-	res, err := SendPostRequest(w, utils.SpliceUrl(CoordinatorAddr, CoordinatorPort, "register"))
+	res, err := httpRequest.SendPostRequest(w, utils.SpliceUrl(CoordinatorAddr, CoordinatorPort, "register"))
 	if err != nil {
 		panic(err)
 	}
@@ -129,7 +129,7 @@ func (w *Worker) Register() {
 }
 
 func (w *Worker) Update() {
-	res, err := SendPutRequest(w, utils.SpliceUrl(CoordinatorAddr, CoordinatorPort, "update"))
+	res, err := httpRequest.SendPutRequest(w, utils.SpliceUrl(CoordinatorAddr, CoordinatorPort, "update"))
 	if err != nil {
 		panic(err)
 	}
@@ -138,7 +138,8 @@ func (w *Worker) Update() {
 
 // CallReduce Since map phrase is auto,it is call for Reduce
 func (w *Worker) CallReduce() {
-	res, err := SendPostRequest(w, utils.SpliceUrl(CoordinatorAddr, CoordinatorPort, "callReduce"))
+	fmt.Println("Call Reduce")
+	res, err := httpRequest.SendPostRequest(w, utils.SpliceUrl(CoordinatorAddr, CoordinatorPort, "callReduce"))
 	if err != nil {
 		panic(err)
 	}
@@ -156,7 +157,7 @@ func (w *Worker) CheckP2PConnect(targetAddr string) {
 }
 
 // sendTask send a single file to target worker by reading the whole file in memory
-func (w *Worker) sendTask(taskID utils.HashValue, targetAddr string) (*http.Response, error) {
+func (w *Worker) sendTask(taskID hash.HashValue, targetAddr string) (*http.Response, error) {
 	file, err := os.Open(w.TaskList[taskID].Location)
 	if err != nil {
 		return nil, err
@@ -171,7 +172,7 @@ func (w *Worker) sendTask(taskID utils.HashValue, targetAddr string) (*http.Resp
 		FMeta:  w.TaskList[taskID],
 		FData:  data,
 	}
-	res, err := SendFileRequest(newTransmitTask, "http://"+targetAddr+"/send") //send a single file
+	res, err := httpRequest.SendFileRequest(newTransmitTask, "http://"+targetAddr+"/send") //send a single file
 	return res, err
 }
 
@@ -187,7 +188,7 @@ func (w *Worker) Transmit(tasks TransmitTask) {
 
 		//create treads for every target
 		wg.Add(1)
-		go func(targetAddr string, taskID []utils.HashValue) {
+		go func(targetAddr string, taskID []hash.HashValue) {
 			defer wg.Done()
 			for _, file := range taskID {
 				ok := w.checkTask(file)
@@ -216,8 +217,8 @@ func (w *Worker) Transmit(tasks TransmitTask) {
 	wg.Wait()
 }
 
-func (w *Worker) checksumHash(filePath string, fileID utils.HashValue) (bool, error) {
-	fileHash, err := utils.GetFileHash(filePath)
+func (w *Worker) checksumHash(filePath string, fileID hash.HashValue) (bool, error) {
+	fileHash, err := hash.GetFileHash(filePath)
 	if err != nil {
 		return false, err
 	}

@@ -3,6 +3,7 @@ package mr
 import (
 	"fmt"
 	"log"
+	"main/httpRequest"
 	"main/utils"
 	"net"
 	"net/http"
@@ -74,7 +75,7 @@ func (c *Coordinator) returnOnlineWorker() ([]string, []*Worker) {
 	return onlineIDList, onlineWorkerList
 }
 
-// AssignWork : Some method to assign task:1.if worker get this task assgin
+// AssignWork : Some method to assign task:1.if worker get this task assign
 // 2.Equally distributed according to the number of workers
 // 3.Assign based on worker connections on the basis of 2
 func (c *Coordinator) AssignReduceTask() ReduceTaskSet {
@@ -127,7 +128,7 @@ func (c *Coordinator) sendCheckAndUpdate(workerID string) error {
 		return nil
 	}
 	c.Workers[workerID].State = "online"
-	c.Workers[workerID].LastOnlie = time.Now()
+	c.Workers[workerID].LastOnline = time.Now()
 	return nil
 
 }
@@ -145,7 +146,7 @@ func (c *Coordinator) transmit(sender *Worker, tTask TransmitTask) {
 		}
 
 	}
-	res, err := SendPostRequest(tTask, utils.SpliceUrl(sender.Addr, sender.Port, "transmit"))
+	res, err := httpRequest.SendPostRequest(tTask, utils.SpliceUrl(sender.Addr, sender.Port, "transmitOrder"))
 	if err != nil {
 		log.Fatal(err)
 	}

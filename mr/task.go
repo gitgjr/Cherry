@@ -2,31 +2,32 @@ package mr
 
 import (
 	"errors"
-	"main/utils"
+	"main/hash"
+	"main/meta"
 )
 
-type Task map[utils.HashValue]FileMeta //taskID : fileMeta
+type Task map[hash.HashValue]meta.FileMeta //taskID : fileMeta
 
 // WorkerAddr:[]TaskID, let one worker send its files to multiple  workers
-// give a sender a list :reciver.addr:[]TaskID
+// give a sender a list :receiver.addr:[]TaskID
 // worker1.addr:[task1,task2],worker2.addr:[task3,task4]
-type TransmitTask map[string][]utils.HashValue
+type TransmitTask map[string][]hash.HashValue
 
 // WorkerID:[]TaskID,let multiple  workers to send their files one worker
 // give multiple sender a list :sender.addr:[]TaskID ,set means it needs to be divided into several TransmitTask
 // worker1.addr:[task1,task2],worker2.addr:[task3,task4]
-type ReduceTaskSet map[string][]utils.HashValue
+type ReduceTaskSet map[string][]hash.HashValue
 
 type SingleTransmitTask struct {
-	TaskID utils.HashValue
-	FMeta  FileMeta
+	TaskID hash.HashValue
+	FMeta  meta.FileMeta
 	FData  []byte
 }
 
 // MakeTransmitTask :For all tasks, scan all workers
 // and let the task be transmitted by that worker if that worker has that task.
 // The crudest way to assign
-func MakeTransmitTask(receivers []*Worker, transmitTaskID []utils.HashValue) TransmitTask {
+func MakeTransmitTask(receivers []*Worker, transmitTaskID []hash.HashValue) TransmitTask {
 	t := make(TransmitTask)
 	for _, receiver := range receivers {
 		for _, taskID := range transmitTaskID {
