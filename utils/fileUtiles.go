@@ -7,6 +7,7 @@ import (
 	"strings"
 )
 
+// RootPath return root path of project like user/golang/DMR/
 func RootPath() string {
 	_, b, _, _ := runtime.Caller(0)
 	basePath := filepath.Dir(b)
