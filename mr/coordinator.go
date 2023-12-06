@@ -100,22 +100,32 @@ func (c *Coordinator) returnNonemptyWorker() ([]string, []*Worker, error) {
 // AssignMapWork :
 // M1. Average assign without bandwidth
 // M2. Bandwidth average assign
-func (c *Coordinator) assignMapWork() {
+func (c *Coordinator) assignMapWork() (mapTaskSet, error) {
 	c.ScanAllTask()
-	nonemptyWorkerID, _ := c.returnNonemptyWorker()
-	onlineWorkerID, _ := c.returnOnlineWorker()
+	nonemptyWorkerID, _, err := c.returnNonemptyWorker()
+	if err != nil {
+		return nil, err
+	}
+	onlineWorkerID, _, err := c.returnOnlineWorker()
+	if err != nil {
+		return nil, err
+	}
 	newMapTaskSet := c.assignMapTaskM1(nonemptyWorkerID, onlineWorkerID)
+	return newMapTaskSet, nil
 }
 
 // AssignReduceWork :
 // M1.if worker get this task assign(Random assignment)
 // M2.Equally distributed according to the number of workers(Average assignment)
 // M3.Assign based on worker connections on the basis of 2(RTT assignment)
-func (c *Coordinator) assignReduceTask() reduceTaskSet {
-	c.ScanAllTask()                               //TODO should remove,just for test
-	_, onlineWorkerList := c.returnOnlineWorker() //[WorkerID]
+func (c *Coordinator) assignReduceTask() (reduceTaskSet, error) {
+	c.ScanAllTask()                                    //TODO should remove,just for test
+	_, onlineWorkerList, err := c.returnOnlineWorker() //[WorkerID]
+	if err != nil {
+		return nil, err
+	}
 	newTransmitTaskSet := c.assignReduceTaskM1(onlineWorkerList)
-	return newTransmitTaskSet
+	return newTransmitTaskSet, nil
 }
 
 // CheckWorkers: check and update the state of workers
