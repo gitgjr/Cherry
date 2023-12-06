@@ -83,7 +83,7 @@ func (c *Coordinator) callTransmitHandler(w http.ResponseWriter, req *http.Reque
 		for senderID, taskList := range taskSet {
 			//create transmit task reduceTask to transmitTask and send order
 			go func(sID string, task []hash.HashValue) {
-				newTransmitTask := make(TransmitTask)
+				newTransmitTask := make(transmitTask)
 				newTransmitTask[requestWorker.Addr+":"+requestWorker.Port] = task
 				//send order
 				c.transmit(c.Workers[sID], newTransmitTask)

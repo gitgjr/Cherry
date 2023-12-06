@@ -15,7 +15,7 @@ type Coordinator struct {
 	Workers  map[string]*Worker //[workerID]*Worker
 	NWorkers int
 	Bucket
-	allTask Task //all tasks from registered worker
+	allTask task //all tasks from registered worker
 	// TaskChannel chan Task
 	mutex sync.Mutex
 }
@@ -27,7 +27,7 @@ type Bucket map[int]hash.HashValue //WorkerID:Task
 func NewCoordinator() *Coordinator {
 	c := Coordinator{}
 	c.Workers = make(map[string]*Worker)
-	c.allTask = make(Task)
+	c.allTask = make(task)
 	return &c
 }
 
@@ -54,7 +54,7 @@ func (c *Coordinator) ScanAllTask() {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 	for _, w := range c.Workers {
-		err := MergeTasks(c.allTask, w.TaskList)
+		err := mergeTasks(c.allTask, w.TaskList)
 		if err != nil {
 			panic(err)
 		}
@@ -98,7 +98,7 @@ func (c *Coordinator) AssignMapWork() {
 // M1.if worker get this task assign(Random assignment)
 // M2.Equally distributed according to the number of workers(Average assignment)
 // M3.Assign based on worker connections on the basis of 2(RTT assignment)
-func (c *Coordinator) AssignReduceTask() ReduceTaskSet {
+func (c *Coordinator) AssignReduceTask() reduceTaskSet {
 	c.ScanAllTask()
 	_, onlineWorkerList := c.returnOnlineWorker() //[WorkerID]
 	newTransmitTaskSet := c.assignReduceTaskM1(onlineWorkerList)
@@ -141,7 +141,7 @@ func (c *Coordinator) sendCheckAndUpdate(workerID string) error {
 
 // transmit: give a worker a command to transmit receivers:WorkerID of receivers,
 // transmitTaskID:TaskID of tasks to be transmitted
-func (c *Coordinator) transmit(sender *Worker, tTask TransmitTask) {
+func (c *Coordinator) transmit(sender *Worker, tTask transmitTask) {
 	//check if task exist
 	for _, taskIDList := range tTask {
 		for _, taskID := range taskIDList {

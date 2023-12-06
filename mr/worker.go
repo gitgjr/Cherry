@@ -35,7 +35,7 @@ type Worker struct {
 	WorkerID string
 	Addr     string
 	Port     string
-	TaskList Task
+	TaskList task
 	mutex    sync.Mutex
 	//only for coordinator
 	State      string //online , offline
@@ -67,7 +67,7 @@ func NewWorker() *Worker {
 	w.WorkerID = newID()
 	w.Addr = WorkerAddr
 	w.Port = WorkerPort
-	w.TaskList = make(Task)
+	w.TaskList = make(task)
 	return &w
 }
 
@@ -179,7 +179,7 @@ func (w *Worker) sendTask(taskID hash.HashValue, targetAddr string) (*http.Respo
 // Two methods to transmit:
 // 1. Read and send a file one by one
 // 2. Use Multipart send some files which divided into chunks in a same time
-func (w *Worker) Transmit(tasks TransmitTask) {
+func (w *Worker) Transmit(tasks transmitTask) {
 	fmt.Println("Transmitting")
 	var wg sync.WaitGroup
 	for workerAddr := range tasks {

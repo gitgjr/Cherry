@@ -6,20 +6,20 @@ import (
 	"main/meta"
 )
 
-type Task map[hash.HashValue]meta.FileMeta //taskID : fileMeta
+type task map[hash.HashValue]meta.FileMeta //taskID : fileMeta
 
-// TransmitTask WorkerAddr:[]TaskID, let one worker send its files to multiple  workers
+// transmitTask WorkerAddr:[]TaskID, let one worker send its files to multiple  workers
 // give a sender a list :receiver.addr:[]TaskID
 // worker1.addr:[task1,task2],worker2.addr:[task3,task4]
-type TransmitTask map[string][]hash.HashValue
+type transmitTask map[string][]hash.HashValue
 
 // mapTaskSet WorkerID:transmitTask , a set of transmit task assigned by coordinator
-type mapTaskSet map[string]TransmitTask
+type mapTaskSet map[string]transmitTask
 
-// ReduceTaskSet WorkerID:[]TaskID,let multiple  workers to send their files one worker
+// reduceTaskSet WorkerID:[]TaskID,let multiple  workers to send their files one worker
 // give multiple sender a list :sender.addr:[]TaskID ,set means it needs to be divided into several TransmitTask
 // worker1.addr:[task1,task2],worker2.addr:[task3,task4]
-type ReduceTaskSet map[string][]hash.HashValue
+type reduceTaskSet map[string][]hash.HashValue
 
 // singleTransmitTask the real data struck for transmit , always convert to json
 type singleTransmitTask struct {
@@ -28,11 +28,11 @@ type singleTransmitTask struct {
 	FData  []byte
 }
 
-// MakeTransmitTask :For all tasks, scan all workers
+// makeTransmitTask :For all tasks, scan all workers
 // and let the task be transmitted by that worker if that worker has that task.
 // The crudest way to assign
-func MakeTransmitTask(receivers []*Worker, transmitTaskID []hash.HashValue) TransmitTask {
-	t := make(TransmitTask)
+func makeTransmitTask(receivers []*Worker, transmitTaskID []hash.HashValue) transmitTask {
+	t := make(transmitTask)
 	for _, receiver := range receivers {
 		for _, taskID := range transmitTaskID {
 			_, receiverOk := receiver.TaskList[taskID]
@@ -45,8 +45,8 @@ func MakeTransmitTask(receivers []*Worker, transmitTaskID []hash.HashValue) Tran
 	return t
 }
 
-// MergeTasks: Merge m2 to m1,return error when they have same keys
-func MergeTasks(m1 Task, m2 Task) error {
+// mergeTasks: Merge m2 to m1,return error when they have same keys
+func mergeTasks(m1 task, m2 task) error {
 	for k, v := range m2 {
 		if _, ok := m1[k]; ok {
 			return errors.New("hash conflict, two hashmap have same key")

@@ -23,7 +23,7 @@ func (worker *Worker) TransmitOrderHandler(w http.ResponseWriter, req *http.Requ
 		fmt.Println("Only post method is allowed")
 		w.WriteHeader(http.StatusMethodNotAllowed)
 	} else {
-		var transmitTask TransmitTask
+		var transmitTask transmitTask
 		err := json.NewDecoder(req.Body).Decode(&transmitTask)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
