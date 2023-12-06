@@ -58,7 +58,7 @@ func (worker *Worker) TransmitHandler(w http.ResponseWriter, req *http.Request) 
 		fmt.Println("Only post method is allowed")
 		w.WriteHeader(http.StatusMethodNotAllowed)
 	} else {
-		var transmitTask SingleTransmitTask
+		var transmitTask singleTransmitTask
 		err := json.NewDecoder(req.Body).Decode(&transmitTask)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
@@ -66,10 +66,12 @@ func (worker *Worker) TransmitHandler(w http.ResponseWriter, req *http.Request) 
 		}
 		tempFilePath := TempPath + "/" + transmitTask.FMeta.FileName
 		file, err := os.Create(tempFilePath)
-		defer file.Close()
+
 		if err != nil {
 			panic(err)
 		}
+		defer file.Close()
+
 		_, err = file.Write(transmitTask.FData)
 		if err != nil {
 			panic(err)

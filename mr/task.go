@@ -8,17 +8,21 @@ import (
 
 type Task map[hash.HashValue]meta.FileMeta //taskID : fileMeta
 
-// WorkerAddr:[]TaskID, let one worker send its files to multiple  workers
+// TransmitTask WorkerAddr:[]TaskID, let one worker send its files to multiple  workers
 // give a sender a list :receiver.addr:[]TaskID
 // worker1.addr:[task1,task2],worker2.addr:[task3,task4]
 type TransmitTask map[string][]hash.HashValue
 
-// WorkerID:[]TaskID,let multiple  workers to send their files one worker
+// mapTaskSet WorkerID:transmitTask , a set of transmit task assigned by coordinator
+type mapTaskSet map[string]TransmitTask
+
+// ReduceTaskSet WorkerID:[]TaskID,let multiple  workers to send their files one worker
 // give multiple sender a list :sender.addr:[]TaskID ,set means it needs to be divided into several TransmitTask
 // worker1.addr:[task1,task2],worker2.addr:[task3,task4]
 type ReduceTaskSet map[string][]hash.HashValue
 
-type SingleTransmitTask struct {
+// singleTransmitTask the real data struck for transmit , always convert to json
+type singleTransmitTask struct {
 	TaskID hash.HashValue
 	FMeta  meta.FileMeta
 	FData  []byte

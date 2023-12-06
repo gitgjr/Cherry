@@ -166,7 +166,7 @@ func (w *Worker) sendTask(taskID hash.HashValue, targetAddr string) (*http.Respo
 	if err != nil {
 		return nil, err
 	}
-	newTransmitTask := SingleTransmitTask{
+	newTransmitTask := singleTransmitTask{
 		TaskID: taskID,
 		FMeta:  w.TaskList[taskID],
 		FData:  data,
@@ -192,7 +192,7 @@ func (w *Worker) Transmit(tasks TransmitTask) {
 			for _, file := range taskID {
 				ok := w.checkTask(file)
 				// if
-				if ok == false {
+				if !ok {
 					fmt.Println("File not exist, send update to coordinator")
 					w.Update()
 					return

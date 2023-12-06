@@ -3,12 +3,10 @@ package mr
 import (
 	"fmt"
 	"log"
+	"main/hash"
 	"main/httpRequest"
 	"main/utils"
-	"net"
 	"net/http"
-	"net/rpc"
-	"os"
 	"sync"
 	"time"
 )
@@ -24,7 +22,7 @@ type Coordinator struct {
 
 //TODO: Message service and P2P service
 
-type Bucket map[int]Task //WorkerID:Task
+type Bucket map[int]hash.HashValue //WorkerID:Task
 
 func NewCoordinator() *Coordinator {
 	c := Coordinator{}
@@ -61,9 +59,9 @@ func (c *Coordinator) ScanAllTask() {
 			panic(err)
 		}
 	}
-
 }
 
+// returnOnlineWorker return list of ID of online worker and list of online worker
 func (c *Coordinator) returnOnlineWorker() ([]string, []*Worker) {
 	onlineIDList := []string{}
 	onlineWorkerList := []*Worker{}
@@ -76,28 +74,35 @@ func (c *Coordinator) returnOnlineWorker() ([]string, []*Worker) {
 	return onlineIDList, onlineWorkerList
 }
 
-// AssignWork : Some method to assign task:1.if worker get this task assign
-// 2.Equally distributed according to the number of workers
-// 3.Assign based on worker connections on the basis of 2
+// returnNonemptyWorker return list of ID of Nonempty worker and list of Nonempty worker
+func (c *Coordinator) returnNonemptyWorker() ([]string, []*Worker) {
+	nonemptyIDList := []string{}
+	nonemptyWorkerList := []*Worker{}
+	for id, w := range c.Workers {
+		if len(w.TaskList) > 0 {
+			nonemptyIDList = append(nonemptyIDList, id)
+			nonemptyWorkerList = append(nonemptyWorkerList, w)
+		}
+	}
+	return nonemptyIDList, nonemptyWorkerList
+}
+
+// AssignMapWork :
+// M1. Average assign without bandwidth
+// M2. Bandwidth average assign
+func (c *Coordinator) AssignMapWork() {
+
+}
+
+// AssignReduceWork :
+// M1.if worker get this task assign(Random assignment)
+// M2.Equally distributed according to the number of workers(Average assignment)
+// M3.Assign based on worker connections on the basis of 2(RTT assignment)
 func (c *Coordinator) AssignReduceTask() ReduceTaskSet {
 	c.ScanAllTask()
 	_, onlineWorkerList := c.returnOnlineWorker() //[WorkerID]
-	newTransmitTaskSet := c.assignTaskM1(onlineWorkerList)
+	newTransmitTaskSet := c.assignReduceTaskM1(onlineWorkerList)
 	return newTransmitTaskSet
-}
-
-func (c *Coordinator) assignTaskM1(onlineList []*Worker) ReduceTaskSet {
-	r := make(ReduceTaskSet)
-	for _, worker := range onlineList {
-		for taskID, _ := range c.allTask {
-			_, workerOk := worker.TaskList[taskID]
-			_, added := r[string(taskID)]
-			if !added && workerOk {
-				r[worker.WorkerID] = append(r[worker.WorkerID], taskID)
-			}
-		}
-	}
-	return r
 }
 
 // CheckWorkers: check and update the state of workers
@@ -132,7 +137,6 @@ func (c *Coordinator) sendCheckAndUpdate(workerID string) error {
 	c.Workers[workerID].State = "online"
 	c.Workers[workerID].LastOnline = time.Now()
 	return nil
-
 }
 
 // transmit: give a worker a command to transmit receivers:WorkerID of receivers,
@@ -156,20 +160,7 @@ func (c *Coordinator) transmit(sender *Worker, tTask TransmitTask) {
 }
 
 func (c *Coordinator) DivideBucket() {
-	// TODO: If need to storage distributively
-}
 
-func (c *Coordinator) server() {
-	rpc.Register(c)
-	rpc.HandleHTTP()
-	//l, e := net.Listen("tcp", ":1234")
-	sockname := coordinatorSock()
-	os.Remove(sockname)
-	l, e := net.Listen("unix", sockname)
-	if e != nil {
-		log.Fatal("listen error:", e)
-	}
-	go http.Serve(l, nil)
 }
 
 // scanForFiles:Add files into MTask list via prefix and suffix

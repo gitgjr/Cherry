@@ -23,6 +23,7 @@ func FileSize(filePath string) (int, error) {
 	return int(fileInfo.Size()), nil
 }
 
+// FindFiles via prefix and suffix, prefix and suffix could be "",return an array of list name
 func FindFiles(folderPath, prefix, suffix string) ([]string, error) {
 	var matchingFiles []string
 
