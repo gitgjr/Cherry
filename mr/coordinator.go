@@ -1,6 +1,7 @@
 package mr
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"main/hash"
@@ -14,13 +15,10 @@ import (
 type Coordinator struct {
 	Workers  map[string]*Worker //[workerID]*Worker
 	NWorkers int
-	Bucket
-	allTask task //all tasks from registered worker
+	allTask  task //all tasks from registered worker
 	// TaskChannel chan Task
 	mutex sync.Mutex
 }
-
-//TODO: Message service and P2P service
 
 type Bucket map[int]hash.HashValue //WorkerID:Task
 
@@ -49,7 +47,8 @@ func (c *Coordinator) PrintWorkers() {
 	}
 }
 
-// ScanAllTask:Scan all registered creator and add all the task they hold into allTask
+// ScanAllTask:Scan all registered creator and add all the task they hold into allTask.
+// Should be called after all creator registered or ten mins after coordinator start
 func (c *Coordinator) ScanAllTask() {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
@@ -62,7 +61,7 @@ func (c *Coordinator) ScanAllTask() {
 }
 
 // returnOnlineWorker return list of ID of online worker and list of online worker
-func (c *Coordinator) returnOnlineWorker() ([]string, []*Worker) {
+func (c *Coordinator) returnOnlineWorker() ([]string, []*Worker, error) {
 	onlineIDList := []string{}
 	onlineWorkerList := []*Worker{}
 	for id, w := range c.Workers {
@@ -71,11 +70,17 @@ func (c *Coordinator) returnOnlineWorker() ([]string, []*Worker) {
 			onlineWorkerList = append(onlineWorkerList, w)
 		}
 	}
-	return onlineIDList, onlineWorkerList
+	if len(onlineIDList) < 1 {
+		return nil, nil, errors.New("no online worker exists")
+	} else {
+		return onlineIDList, onlineWorkerList, nil
+	}
+
 }
 
 // returnNonemptyWorker return list of ID of Nonempty worker and list of Nonempty worker
-func (c *Coordinator) returnNonemptyWorker() ([]string, []*Worker) {
+func (c *Coordinator) returnNonemptyWorker() ([]string, []*Worker, error) {
+
 	nonemptyIDList := []string{}
 	nonemptyWorkerList := []*Worker{}
 	for id, w := range c.Workers {
@@ -84,22 +89,30 @@ func (c *Coordinator) returnNonemptyWorker() ([]string, []*Worker) {
 			nonemptyWorkerList = append(nonemptyWorkerList, w)
 		}
 	}
-	return nonemptyIDList, nonemptyWorkerList
+	if len(nonemptyIDList) < 1 {
+		return nil, nil, errors.New("no nonempty worker exists")
+	} else {
+		return nonemptyIDList, nonemptyWorkerList, nil
+	}
+
 }
 
 // AssignMapWork :
 // M1. Average assign without bandwidth
 // M2. Bandwidth average assign
-func (c *Coordinator) AssignMapWork() {
-
+func (c *Coordinator) assignMapWork() {
+	c.ScanAllTask()
+	nonemptyWorkerID, _ := c.returnNonemptyWorker()
+	onlineWorkerID, _ := c.returnOnlineWorker()
+	newMapTaskSet := c.assignMapTaskM1(nonemptyWorkerID, onlineWorkerID)
 }
 
 // AssignReduceWork :
 // M1.if worker get this task assign(Random assignment)
 // M2.Equally distributed according to the number of workers(Average assignment)
 // M3.Assign based on worker connections on the basis of 2(RTT assignment)
-func (c *Coordinator) AssignReduceTask() reduceTaskSet {
-	c.ScanAllTask()
+func (c *Coordinator) assignReduceTask() reduceTaskSet {
+	c.ScanAllTask()                               //TODO should remove,just for test
 	_, onlineWorkerList := c.returnOnlineWorker() //[WorkerID]
 	newTransmitTaskSet := c.assignReduceTaskM1(onlineWorkerList)
 	return newTransmitTaskSet

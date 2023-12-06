@@ -79,7 +79,7 @@ func (c *Coordinator) callTransmitHandler(w http.ResponseWriter, req *http.Reque
 		}
 		c.CheckWorkers() //test good
 		// c.PrintWorkers() //worker good
-		taskSet := c.AssignReduceTask()
+		taskSet := c.assignReduceTask()
 		for senderID, taskList := range taskSet {
 			//create transmit task reduceTask to transmitTask and send order
 			go func(sID string, task []hash.HashValue) {
