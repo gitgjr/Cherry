@@ -55,3 +55,19 @@ func mergeTasks(m1 task, m2 task) error {
 	}
 	return nil
 }
+
+// return the total size of task
+func (t task) sumSize() (int, error) {
+	if len(t) < 1 {
+		return -1, errors.New("Task is empty")
+	}
+
+	sum := 0
+	for _, meta := range t {
+		sum += meta.FileSize
+	}
+	if sum < 1 {
+		return -1, errors.New("sum is zero")
+	}
+	return sum, nil
+}

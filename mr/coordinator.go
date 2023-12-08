@@ -13,9 +13,9 @@ import (
 )
 
 type Coordinator struct {
-	Workers  map[string]*Worker //[workerID]*Worker
-	NWorkers int
-	allTask  task //all tasks from registered worker.//
+	Workers            map[string]*Worker //[workerID]*Worker
+	ReplicaCoefficient float32
+	allTask            task //all tasks from registered worker.
 	// After the map process, all workers actually hold 1.2 to 2 times the tasks
 	// TaskChannel chan Task
 	mutex sync.Mutex
@@ -25,6 +25,7 @@ type Bucket map[int]hash.HashValue //WorkerID:Task
 
 func NewCoordinator() *Coordinator {
 	c := Coordinator{}
+	c.ReplicaCoefficient = 1.2
 	c.Workers = make(map[string]*Worker)
 	c.allTask = make(task)
 	return &c
@@ -99,25 +100,24 @@ func (c *Coordinator) returnNonemptyWorker() ([]string, []*Worker, error) {
 }
 
 // assignMapTask :
-// M1. Average assign without bandwidth
-// M2. Bandwidth average assign
-// M3. Bandwidth RTT assign
+// M1. Bandwidth average assign
+// M2. Bandwidth RTT assign
 func (c *Coordinator) assignMapTask() (mapTaskSet, error) {
 	c.addAllTask()
 	nonemptyWorkerID, _, err := c.returnNonemptyWorker()
 	if err != nil {
 		return nil, err
 	}
-	onlineWorkerID, _, err := c.returnOnlineWorker()
+	_, onlineWorker, err := c.returnOnlineWorker()
 	if err != nil {
 		return nil, err
 	}
-	newMapTaskSet := c.assignMapTaskM1(nonemptyWorkerID, onlineWorkerID)
+	newMapTaskSet := c.assignMapTaskM1(nonemptyWorkerID, onlineWorker)
 	return newMapTaskSet, nil
 }
 
 // assignReduceTask :
-// M1.if worker get this task assign(Random assignment)
+// M1.if worker get this task assign(Round-rand assignment)
 // M2.Equally distributed according to the number of workers(Average assignment)
 // M3.Assign based on worker connections on the basis of 2(RTT assignment)
 func (c *Coordinator) assignReduceTask() (reduceTaskSet, error) {
