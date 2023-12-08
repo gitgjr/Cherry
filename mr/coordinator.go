@@ -15,7 +15,8 @@ import (
 type Coordinator struct {
 	Workers  map[string]*Worker //[workerID]*Worker
 	NWorkers int
-	allTask  task //all tasks from registered worker
+	allTask  task //all tasks from registered worker.//
+	// After the map process, all workers actually hold 1.2 to 2 times the tasks
 	// TaskChannel chan Task
 	mutex sync.Mutex
 }
@@ -47,9 +48,9 @@ func (c *Coordinator) PrintWorkers() {
 	}
 }
 
-// ScanAllTask:Scan all registered creator and add all the task they hold into allTask.
+// addAllTask:Scan all registered creator and add all the task they hold into allTask.
 // Should be called after all creator registered or ten mins after coordinator start
-func (c *Coordinator) ScanAllTask() {
+func (c *Coordinator) addAllTask() {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 	for _, w := range c.Workers {
@@ -97,11 +98,12 @@ func (c *Coordinator) returnNonemptyWorker() ([]string, []*Worker, error) {
 
 }
 
-// AssignMapWork :
+// assignMapTask :
 // M1. Average assign without bandwidth
 // M2. Bandwidth average assign
-func (c *Coordinator) assignMapWork() (mapTaskSet, error) {
-	c.ScanAllTask()
+// M3. Bandwidth RTT assign
+func (c *Coordinator) assignMapTask() (mapTaskSet, error) {
+	c.addAllTask()
 	nonemptyWorkerID, _, err := c.returnNonemptyWorker()
 	if err != nil {
 		return nil, err
@@ -114,12 +116,12 @@ func (c *Coordinator) assignMapWork() (mapTaskSet, error) {
 	return newMapTaskSet, nil
 }
 
-// AssignReduceWork :
+// assignReduceTask :
 // M1.if worker get this task assign(Random assignment)
 // M2.Equally distributed according to the number of workers(Average assignment)
 // M3.Assign based on worker connections on the basis of 2(RTT assignment)
 func (c *Coordinator) assignReduceTask() (reduceTaskSet, error) {
-	c.ScanAllTask()                                    //TODO should remove,just for test
+	c.addAllTask()                                     //TODO should remove,just for test
 	_, onlineWorkerList, err := c.returnOnlineWorker() //[WorkerID]
 	if err != nil {
 		return nil, err
@@ -144,6 +146,7 @@ func (c *Coordinator) CheckWorkers() {
 	// c.PrintWorkers()
 }
 
+// sendCheckAndUpdate atomic function
 func (c *Coordinator) sendCheckAndUpdate(workerID string) error {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
@@ -181,9 +184,3 @@ func (c *Coordinator) transmit(sender *Worker, tTask transmitTask) {
 	}
 	fmt.Println(res) //TODO: Change here
 }
-
-func (c *Coordinator) DivideBucket() {
-
-}
-
-// scanForFiles:Add files into MTask list via prefix and suffix

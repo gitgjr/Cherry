@@ -2,10 +2,13 @@ package mr
 
 // M1. Average assign without bandwidth
 func (c *Coordinator) assignMapTaskM1(nonemptyIDList []string, onlineID []string) mapTaskSet {
-	m := make(mapTaskSet)
-	for _, nonemptyID := range nonemptyIDList {
-
-	}
+	// m := make(mapTaskSet)
+	// for _, workerID := range nonemptyIDList {
+	// 	for taskID, _ := range c.allTask {
+	// 		_, workerGet := c.Workers[workerID].TaskList[taskID]
+	// 	}
+	// }
+	return nil
 }
 
 // M2. Bandwidth average assign
