@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 )
 
 func ConvertToHLS(inputFile string, outputDirectory string) error {
@@ -38,6 +39,40 @@ func ConvertToHLS(inputFile string, outputDirectory string) error {
 	}
 
 	fmt.Println("Conversion to HLS completed successfully.")
+	return nil
+}
+
+// Merge n mp4 videos into one, not tested
+func MergeMP4s(inputMP4s []string, outputName string) error {
+	//ffmpeg -i left.mp4 -i right.mp4 -filter_complex hstack output.mp4
+	n := len(inputMP4s)
+	//generate commands
+	args := []string{}
+	for i := 0; i < n; i++ {
+		args = append(args, "-i")
+		args = append(args, inputMP4s[i])
+	}
+	args = append(args, "-filter_complex")
+
+	if n > 2 {
+		args = append(args, "hstack=inputs="+strconv.Itoa(n))
+	} else {
+		args = append(args, "hstack")
+	}
+
+	args = append(args, outputName)
+	fmt.Println(args)
+	cmd := exec.Command("ffmpeg", args...)
+
+	// Redirect command output to stdout and stderr
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	err := cmd.Run()
+	if err != nil {
+		return fmt.Errorf("error running ffmpeg: %v", err)
+	}
+	fmt.Println("Merge successfully.")
 	return nil
 }
 
