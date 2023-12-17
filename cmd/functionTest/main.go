@@ -7,6 +7,7 @@ import (
 	"os"
 )
 
+// TODO:1.Video Merge 2.Implement DHT
 func main() {
 
 	rootPath := utils.RootPath()
@@ -18,11 +19,13 @@ func main() {
 		nc.NcExample()
 	case "merge":
 		videoList := []string{
-			dataPath + "Mvideo1.mp4",
-			dataPath + "Mvideo2.mp4",
+			dataPath + "left.mp4",
+			dataPath + "right.mp4",
 		}
-		outputFile := dataPath + "output.mp4"
+		outputFile := dataPath + "Moutput.mp4"
 		video.MergeMP4s(videoList, outputFile)
+	case "HLS":
+		video.ConvertToHLS(dataPath+"right.mp4", dataPath+"right_out", "2")
 	}
 
 }

@@ -41,16 +41,16 @@ func addReplica(t task, coefficient float32) ([]hash.HashValue, error) {
 //----- M1 of map -----
 
 // assignMapTaskViaSize return the result of assign tasks to receiver via size without consider of sender
-func assignMapTaskViaSize(receivers []*Worker, transmitTaskID []hash.HashValue) ([]hash.HashValue, error) {
+func assignMapTaskViaSize(receivers []*Worker, transmitTaskID []hash.HashValue, totalSize int) ([]hash.HashValue, error) {
 	//intermediateMapTask WorkerID:taskID assigned tasks to receiver without sender,ideal taskList after map
 	intermediateMapTask = make(map[string]hash.HashValue)
-	
-	averageSize:=len(receivers)/
+
+	averageSize := totalSize / len(receivers)
 	//unusedSize WorkerID:totalSize/n
 	unusedSize := make(map[string]int)
 	//fill up unusedSize
 	for _, receiver := range receivers {
-		unusedSize[receiver.WorkerID]=
+		unusedSize[receiver.WorkerID] = averageSize
 	}
 
 	for _, receiver := range receivers {

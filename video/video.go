@@ -8,7 +8,8 @@ import (
 	"strconv"
 )
 
-func ConvertToHLS(inputFile string, outputDirectory string) error {
+func ConvertToHLS(inputFile string, outputDirectory string, duration string) error {
+	//ffmpeg -i filename.mp4 -codec: copy -start_number 0 -hls_time 5 -hls_list_size 0 -f hls filename.m3u8
 	// Create the output directory if it doesn't exist
 	if err := os.MkdirAll(outputDirectory, os.ModePerm); err != nil {
 		return err
@@ -21,8 +22,9 @@ func ConvertToHLS(inputFile string, outputDirectory string) error {
 	cmd := exec.Command(
 		"ffmpeg",
 		"-i", inputFile,
-		"-c:v", "libx264",
-		"-hls_time", "5",
+		"-codec:", "copy",
+		"-start_number", "0",
+		"-hls_time", duration,
 		"-hls_list_size", "0",
 		"-hls_segment_filename", filepath.Join(outputDirectory, "segment%03d.ts"),
 		outputPlaylist,
@@ -43,7 +45,7 @@ func ConvertToHLS(inputFile string, outputDirectory string) error {
 }
 
 // Merge n mp4 videos into one, not tested
-func MergeMP4s(inputMP4s []string, outputName string) error {
+func MergeMP4s(inputMP4s []string, outputDirectory string) error {
 	//ffmpeg -i left.mp4 -i right.mp4 -filter_complex hstack output.mp4
 	n := len(inputMP4s)
 	//generate commands
@@ -60,7 +62,7 @@ func MergeMP4s(inputMP4s []string, outputName string) error {
 		args = append(args, "hstack")
 	}
 
-	args = append(args, outputName)
+	args = append(args, outputDirectory)
 	fmt.Println(args)
 	cmd := exec.Command("ffmpeg", args...)
 
@@ -75,6 +77,8 @@ func MergeMP4s(inputMP4s []string, outputName string) error {
 	fmt.Println("Merge successfully.")
 	return nil
 }
+
+func SplitMP4() {}
 
 //func main() {
 //	inputFile := "input.mp4"        // Replace with your input MP4 file
