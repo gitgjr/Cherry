@@ -6,10 +6,10 @@ import (
 	"strings"
 
 	"github.com/libp2p/go-libp2p"
+	"github.com/libp2p/go-libp2p-core/host"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
-	"github.com/libp2p/go-libp2p/core/host"
-	"github.com/libp2p/go-libp2p/core/peerstore"
-	"github.com/multiformats/go-multiaddr"
+	peerstore "github.com/libp2p/go-libp2p-peerstore"
+	multiaddr "github.com/multiformats/go-multiaddr"
 )
 
 // var log = logging.Logger("main")
@@ -23,7 +23,7 @@ func generateHost(ctx context.Context, port int64) (host.Host, *dht.IpfsDHT) {
 
 	hostAddr, err := addrForPort(fmt.Sprintf("%d", port))
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println(err)
 	}
 
 	opts := []libp2p.Option{
@@ -33,16 +33,16 @@ func generateHost(ctx context.Context, port int64) (host.Host, *dht.IpfsDHT) {
 
 	host, err := libp2p.New(ctx, opts...)
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println(err)
 	}
 
 	kadDHT, err := dht.New(ctx, host, dht.Validator(nullValidator{}))
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println(err)
 	}
 
 	hostID := host.ID()
-	log.Infof("Host MultiAddress: %s/ipfs/%s (%s)", host.Addrs()[0].String(), hostID.Pretty(), hostID.String())
+	fmt.Printf("Host MultiAddress: %s/ipfs/%s (%s)", host.Addrs()[0].String(), hostID.Pretty(), hostID.String())
 
 	return host, kadDHT
 }

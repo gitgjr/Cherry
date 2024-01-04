@@ -5,6 +5,7 @@ import (
 	"main/zlog"
 	"math/rand"
 
+	peer "github.com/libp2p/go-libp2p-peer"
 	"github.com/libp2p/go-libp2p/core/crypto"
 	"github.com/multiformats/go-multiaddr"
 	"go.uber.org/zap"
@@ -13,27 +14,27 @@ import (
 func makePeer(dest string) (peer.ID, multiaddr.Multiaddr) {
 	ipfsAddr, err := multiaddr.NewMultiaddr(dest)
 	if err != nil {
-		zlog.Error("Err on creating host: %v", err)
+		zlog.Error("Err on creating host: %v", zap.Error(err))
 	}
-	zlog.Debug("Parsed: ipfsAddr = %s", ipfsAddr)
+	zlog.Debug("Parsed: ipfsAddr =", zap.Any("ipfsAddr", ipfsAddr))
 
 	peerIDStr, err := ipfsAddr.ValueForProtocol(multiaddr.P_IPFS)
 	if err != nil {
-		log.Fatalf("Err on creating peerIDStr: %v", err)
+		zlog.Fatal("Err on creating peerIDStr: %v", zap.Error(err))
 	}
-	log.Debugf("Parsed: PeerIDStr = %s", peerIDStr)
+	zlog.Debug("Parsed: PeerIDStr = ", zap.Any("peerIDStr", peerIDStr))
 
 	peerID, err := peer.IDB58Decode(peerIDStr)
 	if err != nil {
-		log.Fatalf("Err on decoding %s: %v", peerIDStr, err)
+		zlog.Fatal("Err on decoding %s: %v", zap.Any("peerIDStr", peerIDStr), zap.Error(err))
 	}
-	log.Debugf("Created peerID = %s", peerID)
+	zlog.Debug("Created peerID =", peerID)
 
 	targetPeerAddr, err := multiaddr.NewMultiaddr(fmt.Sprintf("/ipfs/%s", peer.IDB58Encode(peerID)))
-	log.Debugf("Created targetPeerAddr = %v", targetPeerAddr)
+	zlog.Debug("Created targetPeerAddr = ", zap.Any("targetPeerAddr", targetPeerAddr))
 
 	targetAddr := ipfsAddr.Decapsulate(targetPeerAddr)
-	log.Debugf("Decapsuated = %v", targetAddr)
+	zlog.Debug("Decapsuated = ", zap.Any("targetAddr", targetAddr))
 
 	return peerID, targetAddr
 }
