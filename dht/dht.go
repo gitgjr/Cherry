@@ -2,61 +2,46 @@ package dht
 
 import (
 	"context"
-	"fmt"
-	"strings"
+	"log"
+	"sync"
 
-	"github.com/libp2p/go-libp2p"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
 	"github.com/libp2p/go-libp2p/core/host"
-	"github.com/libp2p/go-libp2p/core/peerstore"
+	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/multiformats/go-multiaddr"
 )
 
-// var log = logging.Logger("main")
+func NewKDHT(ctx context.Context, host host.Host, bootstrapPeers []multiaddr.Multiaddr) (dis, error) {
+	var options []dht.Option
 
-func addrForPort(p string) (multiaddr.Multiaddr, error) {
-	return multiaddr.NewMultiaddr(fmt.Sprintf("/ip4/0.0.0.0/tcp/%s", p))
-}
+	if len(bootstrapPeers) == 0 {
+		options = append(options, dht.Mode(dht.ModeServer))
+	}
 
-func generateHost(ctx context.Context, port int64) (host.Host, *dht.IpfsDHT) {
-	prvKey := generatePrivateKey(port)
-
-	hostAddr, err := addrForPort(fmt.Sprintf("%d", port))
+	kademliaDHT, err := dht.New(ctx, host, options...)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
-	opts := []libp2p.Option{
-		libp2p.ListenAddrs(hostAddr),
-		libp2p.Identity(prvKey),
+	if err = kademliaDHT.Bootstrap(ctx); err != nil {
+		return nil, err
 	}
 
-	host, err := libp2p.New(ctx, opts...)
-	if err != nil {
-		log.Fatal(err)
+	var wg sync.WaitGroup
+	for _, peerAddr := range bootstrapPeers {
+		peerinfo, _ := peer.AddrInfoFromP2pAddr(peerAddr)
+
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			if err := host.Connect(ctx, *peerinfo); err != nil {
+				log.Printf("Error while connecting to node %q: %-v", peerinfo, err)
+			} else {
+				log.Printf("Connection established with bootstrap node: %q", *peerinfo)
+			}
+		}()
 	}
+	wg.Wait()
 
-	kadDHT, err := dht.New(ctx, host, dht.Validator(nullValidator{}))
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	hostID := host.ID()
-	log.Infof("Host MultiAddress: %s/ipfs/%s (%s)", host.Addrs()[0].String(), hostID.Pretty(), hostID.String())
-
-	return host, kadDHT
-}
-
-func addPeers(ctx context.Context, h host.Host, kad *dht.IpfsDHT, peersArg string) {
-	if len(peersArg) == 0 {
-		return
-	}
-
-	peerStrs := strings.Split(peersArg, ",")
-	for i := 0; i < len(peerStrs); i++ {
-		peerID, peerAddr := makePeer(peerStrs[i])
-
-		h.Peerstore().AddAddr(peerID, peerAddr, peerstore.PermanentAddrTTL)
-		kad.Update(ctx, peerID)
-	}
+	return NewRoutingDiscovery(kademliaDHT), nil
 }
