@@ -1,0 +1,3 @@
+docker run -t -d --name=ipfs-install -p 4001 -p 4001/udp -p 5001 -p 00:8080 -p 8081 golang
+docker run -t -d --name=ipfs-node -p 4001 -p 4001/udp -p 5001 -p 00:8080 -p 8081 go-ipfs:v1
+docker run --hostname=51adff2096d7 --mac-address=02:42:ac:11:00:03 --env=PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin --env=SRC_DIR=/kubo --env=IPFS_PATH=/data/ipfs --env=IPFS_LOGGING= --volume=E:\go\ipfs:\home --volume=/data/ipfs -p 4001 -p 4001/udp -p 5001 -p 00:8080 -p 8081 --runtime=runc -d ipfs/kubo:latest
