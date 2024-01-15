@@ -147,7 +147,7 @@ func stackChunks(inputFiles []string, outputDirectory string, stackMethod string
 	args = append(args, "-c:a")
 	args = append(args, "aac")
 	args = append(args, outputDirectory)
-	err := runCommend("ffmpeg", args)
+	err := runFFmpegCommend("ffmpeg", args)
 	if err != nil {
 		return err
 	}
@@ -164,7 +164,7 @@ func addKeyFrame(inputFile string, outputDirectory string, duration int) error {
 		"-codec:a", "copy",
 		outputDirectory,
 	}
-	err := runCommend("ffmpeg", args)
+	err := runFFmpegCommend("ffmpeg", args)
 	if err != nil {
 		return err
 	}
@@ -220,7 +220,7 @@ func resetTimeStamp(inputFile, outputDirectory string, index int, duration float
 		"-c", "copy",
 		outputDirectory,
 	}
-	runCommend("ffmpeg", args)
+	runFFmpegCommend("ffmpeg", args)
 	return nil
 }
 
