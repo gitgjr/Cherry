@@ -1,26 +1,9 @@
 package video
 
-import (
-	"os"
-	"os/exec"
-	"strings"
-)
+import "main/utils"
 
-// argsFromCommend Extracting parameters from a command, return a
-func argsFromCommend(commendString string) []string {
-	args := strings.Fields(commendString)
-	args = args[1:]
-	return args
-}
-
-func runCommend(commend string, args []string) error {
-	cmd := exec.Command("ffmpeg", args...)
-
-	// Redirect command output to stdout and stderr
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-
-	err := cmd.Run()
+func runFFmpegCommend(commend string, args []string) error {
+	err := utils.RunCommend("ffmpeg", args)
 	if err != nil {
 		return err
 	}
