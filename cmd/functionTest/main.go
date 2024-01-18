@@ -1,13 +1,11 @@
 package main
 
 import (
-	"main/nc"
 	"main/utils"
 	"main/video"
 	"os"
 )
 
-// TODO:1.Video Merge 2.Implement DHT
 func main() {
 
 	rootPath := utils.RootPath()
@@ -15,8 +13,6 @@ func main() {
 
 	arg1 := os.Args[1]
 	switch arg1 {
-	case "nc":
-		nc.NcExample()
 	case "merge": //good
 		videoList := []string{
 			dataPath + "/mp4/left_output2.ts",

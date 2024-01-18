@@ -99,22 +99,26 @@ func (c *Coordinator) returnNonemptyWorker() ([]string, []*Worker, error) {
 
 }
 
-// assignMapTask :
-// M1. Bandwidth average assign
-// M2. Bandwidth RTT assign
-func (c *Coordinator) assignMapTask() (mapTaskSet, error) {
-	c.addAllTask()
-	nonemptyWorkerID, _, err := c.returnNonemptyWorker()
-	if err != nil {
-		return nil, err
-	}
-	_, onlineWorker, err := c.returnOnlineWorker()
-	if err != nil {
-		return nil, err
-	}
-	newMapTaskSet := c.assignMapTaskM1(nonemptyWorkerID, onlineWorker)
-	return newMapTaskSet, nil
-}
+//---------FREEZE BEGIN---------
+
+// // assignMapTask :
+// // M1. Bandwidth average assign
+// // M2. Bandwidth RTT assign
+// func (c *Coordinator) assignMapTask() (mapTaskSet, error) {
+// 	c.addAllTask()
+// 	nonemptyWorkerID, _, err := c.returnNonemptyWorker()
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	_, onlineWorker, err := c.returnOnlineWorker()
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	newMapTaskSet := c.assignMapTaskM1(nonemptyWorkerID, onlineWorker)
+// 	return newMapTaskSet, nil
+// }
+
+//---------FREEZE END---------
 
 // assignReduceTask :
 // M1.if worker get this task assign(Round-rand assignment)

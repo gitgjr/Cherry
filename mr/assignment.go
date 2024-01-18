@@ -39,49 +39,52 @@ func addReplica(t task, coefficient float32) ([]hash.HashValue, error) {
 }
 
 //----- M1 of map -----
+//---------FREEZE BEGIN---------
 
 // assignMapTaskViaSize return the result of assign tasks to receiver via size without consider of sender
-func assignMapTaskViaSize(receivers []*Worker, transmitTaskID []hash.HashValue, totalSize int) ([]hash.HashValue, error) {
-	//intermediateMapTask WorkerID:taskID assigned tasks to receiver without sender,ideal taskList after map
-	intermediateMapTask = make(map[string]hash.HashValue)
+// func assignMapTaskViaSize(receivers []*Worker, transmitTaskID []hash.HashValue, totalSize int) ([]hash.HashValue, error) {
+// 	//intermediateMapTask WorkerID:taskID assigned tasks to receiver without sender,ideal taskList after map
+// 	intermediateMapTask = make(map[string]hash.HashValue)
 
-	averageSize := totalSize / len(receivers)
-	//unusedSize WorkerID:totalSize/n
-	unusedSize := make(map[string]int)
-	//fill up unusedSize
-	for _, receiver := range receivers {
-		unusedSize[receiver.WorkerID] = averageSize
-	}
+// 	averageSize := totalSize / len(receivers)
+// 	//unusedSize WorkerID:totalSize/n
+// 	unusedSize := make(map[string]int)
+// 	//fill up unusedSize
+// 	for _, receiver := range receivers {
+// 		unusedSize[receiver.WorkerID] = averageSize
+// 	}
 
-	for _, receiver := range receivers {
-		for _, taskID := range transmitTaskID {
-			_, receiverGet := receiver.TaskList[taskID]
+// 	for _, receiver := range receivers {
+// 		for _, taskID := range transmitTaskID {
+// 			_, receiverGet := receiver.TaskList[taskID]
 
-			if !added && receiverGet {
-				t[receiver.Addr] = append(t[receiver.Addr], taskID)
-			}
-		}
-	}
-	return t
-}
+// 			if !added && receiverGet {
+// 				t[receiver.Addr] = append(t[receiver.Addr], taskID)
+// 			}
+// 		}
+// 	}
+// 	return t
+// }
 
-// M1. Bandwidth average assign
-// First assign task(assignMapTaskViaSize),then assign sender
-func (c *Coordinator) assignMapTaskM1(nonemptyIDList []string, onlineList []*Worker) (mapTaskSet, error) {
-	m := make(mapTaskSet)
-	mapTasks, err := addReplica(c.allTask, c.ReplicaCoefficient)
-	if err != nil {
-		return nil, err
-	}
+// // M1. Bandwidth average assign
+// // First assign task(assignMapTaskViaSize),then assign sender
+// func (c *Coordinator) assignMapTaskM1(nonemptyIDList []string, onlineList []*Worker) (mapTaskSet, error) {
+// 	m := make(mapTaskSet)
+// 	mapTasks, err := addReplica(c.allTask, c.ReplicaCoefficient)
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	// for _, onlineWorkerID := range onlineList {
-	// 	for _, taskID := range mapTasks {
-	// 		_, workerGet := onlineWorkerID.TaskList[taskID]
+// 	// for _, onlineWorkerID := range onlineList {
+// 	// 	for _, taskID := range mapTasks {
+// 	// 		_, workerGet := onlineWorkerID.TaskList[taskID]
 
-	// 	}
-	// }
-	return nil
-}
+// 	// 	}
+// 	// }
+// 	return nil
+// }
+
+//---------FREEZE END---------
 
 // M2. Bandwidth average assign
 func (c *Coordinator) assignMapTaskM2(nonemptyIDList []string) mapTaskSet {
