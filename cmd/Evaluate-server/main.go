@@ -5,6 +5,7 @@ import (
 	"main/utils"
 	"main/video"
 	"main/zlog"
+	"os"
 	"time"
 
 	"go.uber.org/zap"
@@ -18,13 +19,25 @@ func main() {
 	serverPath := dataPath + "/" + "serverWork"
 	durationTime := 5
 
+	leftFile := "left"
+	rightFile := "right"
+	arg1 := os.Args[1]
+	switch arg1 {
+	case "4k":
+		leftFile = "4kleft"
+		rightFile = "4kright"
+	case "1080":
+		leftFile = "1080left"
+		rightFile = "1080right"
+	}
+
 	startTime := time.Now()
-	err := video.Mp4toHLS("left", durationTime, serverPath)
+	err := video.Mp4toHLS(leftFile, durationTime, serverPath)
 	if err != nil {
 		zlog.Error("mp4 to hls error", zap.Error(err))
 	}
 
-	err = video.Mp4toHLS("right", durationTime, serverPath)
+	err = video.Mp4toHLS(rightFile, durationTime, serverPath)
 	if err != nil {
 		fmt.Println("mp4 to hls error", zap.Error(err))
 	}
@@ -47,7 +60,7 @@ func main() {
 			zlog.Error("merge error", zap.Error(err))
 		}
 	}
-	err = video.NewM3u8(serverPath+"/left.m3u8", serverPath+"/new_left.m3u8")
+	err = video.NewM3u8(serverPath+"/"+leftFile+".m3u8", serverPath+"/new_"+leftFile+".m3u8")
 	if err != nil {
 		zlog.Error("generate m3u8 error", zap.Error(err))
 	}
