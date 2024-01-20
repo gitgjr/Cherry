@@ -14,9 +14,12 @@ func ArgsFromCommend(commendString string) []string {
 }
 
 // RunCommend Exec commend with commend name and args
-func RunCommend(commendName string, args []string) error {
+func RunCommend(commendName string, args []string, workDir string) error {
 	cmd := exec.Command(commendName, args...)
 
+	if workDir != "" {
+		cmd.Dir = workDir
+	}
 	// Redirect command output to stdout and stderr
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
