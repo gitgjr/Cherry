@@ -1,9 +1,11 @@
 package main
 
 import (
+	"fmt"
 	"main/utils"
 	"main/video"
 	"main/zlog"
+	"time"
 
 	"go.uber.org/zap"
 )
@@ -13,18 +15,18 @@ func main() {
 	rootPath := utils.RootPath()
 	dataPath := rootPath + "/data"
 	// resourcePath := dataPath + "resource"
-	serverPath := dataPath + "serverWork"
+	serverPath := dataPath + "/" + "serverWork"
 	durationTime := 5
 
-	zlog.Info("Start time")
-	err := video.Mp4toHLS(serverPath+"/left", durationTime)
+	startTime := time.Now()
+	err := video.Mp4toHLS("left", durationTime, serverPath)
 	if err != nil {
 		zlog.Error("mp4 to hls error", zap.Error(err))
 	}
 
-	err = video.Mp4toHLS(serverPath+"/right", durationTime)
+	err = video.Mp4toHLS("right", durationTime, serverPath)
 	if err != nil {
-		zlog.Error("mp4 to hls error", zap.Error(err))
+		fmt.Println("mp4 to hls error", zap.Error(err))
 	}
 
 	tsFileList, err := utils.FindFiles(serverPath, "", ".ts")
@@ -36,7 +38,21 @@ func main() {
 		zlog.Error("the number of ts files is not odd")
 	}
 
-	err = video.MergeTSFile()
+	tsFileNumber := len(tsFileList) / 2
 
-	zlog.Info("End time")
+	for i := 0; i < tsFileNumber; i++ {
+		tsFilePair := video.FindTsFileByIndex(tsFileList, i)
+		err = video.MergeTSFile(tsFilePair, tsFilePair[0], i, "vstack", durationTime, serverPath)
+		if err != nil {
+			zlog.Error("merge error", zap.Error(err))
+		}
+	}
+	err = video.NewM3u8(serverPath+"/left.m3u8", serverPath+"/new_left.m3u8")
+	if err != nil {
+		zlog.Error("generate m3u8 error", zap.Error(err))
+	}
+
+	endTime := time.Now()
+	execTime := endTime.Sub(startTime)
+	fmt.Println("exec time is", execTime.Seconds())
 }

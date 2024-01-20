@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -20,7 +19,7 @@ import (
 //4.Merge(merge_xxxn.ts)
 //5.Reset timeline of .ts files(new_xxn.ts)
 
-func convertToHLS(inputFile string, outputDirectory string, duration int) error {
+func convertToHLS(inputFile string, outputDirectory string, duration int, workDir string) error {
 	//ffmpeg -i filename.mp4 -codec: copy -start_number 0 -hls_time 5 -hls_list_size 0 -f hls filename.m3u8
 	// Create the output directory if it doesn't exist
 
@@ -45,6 +44,7 @@ func convertToHLS(inputFile string, outputDirectory string, duration int) error 
 		outputDirectory,
 	)
 
+	cmd.Dir = workDir
 	// Redirect command output to stdout and stderr
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -93,7 +93,7 @@ func mergeMP4(inputMP4s []string, outputDirectory string) error {
 }
 
 // StackChunks call hstak,vstack or grid filter in ffmpeg
-func stackChunks(inputFiles []string, outputDirectory string, stackMethod string) error {
+func stackChunks(inputFiles []string, outputDirectory string, stackMethod string, workDir string) error {
 	n := len(inputFiles)
 	if n%2 != 0 {
 		return errors.New("number of input is incorrect")
@@ -148,14 +148,14 @@ func stackChunks(inputFiles []string, outputDirectory string, stackMethod string
 	args = append(args, "-c:a")
 	args = append(args, "aac")
 	args = append(args, outputDirectory)
-	err := runFFmpegCommend("ffmpeg", args)
+	err := runFFmpegCommend("ffmpeg", args, workDir)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func addKeyFrame(inputFile string, outputDirectory string, duration int) error {
+func addKeyFrame(inputFile string, outputDirectory string, duration int, workDir string) error {
 	keyint := fmt.Sprintf("keyint=[%d]:min-keyint=[%d]", duration, duration)
 	args := []string{
 		"-i", inputFile,
@@ -165,7 +165,7 @@ func addKeyFrame(inputFile string, outputDirectory string, duration int) error {
 		"-codec:a", "copy",
 		outputDirectory,
 	}
-	err := runFFmpegCommend("ffmpeg", args)
+	err := runFFmpegCommend("ffmpeg", args, workDir)
 	if err != nil {
 		return err
 	}
@@ -214,25 +214,25 @@ func getVideoFPS(filePath string) (int, error) {
 	return fps, nil
 }
 
-func resetTimeStamp(inputFile, outputDirectory string, index int, duration float64, startTime float64) error {
+func resetTimeStamp(inputFile, outputDirectory string, index int, duration float64, startTime float64, workDir string) error {
 	args := []string{
 		"-i", inputFile,
 		"-output_ts_offset", strconv.FormatFloat((duration * float64(index)), 'f', -1, 64),
 		"-c", "copy",
 		outputDirectory,
 	}
-	runFFmpegCommend("ffmpeg", args)
+	runFFmpegCommend("ffmpeg", args, workDir)
 	return nil
 }
 
 // Mp4toHLS convert mp4 to hls after add key_frame,input is name without suffix ,call in creator
-func Mp4toHLS(inputFileName string, duration int) error {
+func Mp4toHLS(inputFileName string, duration int, workDir string) error {
 	//xxx.mp4->added_xxx.mp4->xxxn.ts
-	err := addKeyFrame(inputFileName+".mp4", "added_"+inputFileName+".mp4", duration)
+	err := addKeyFrame(inputFileName+".mp4", "added_"+inputFileName+".mp4", duration, workDir)
 	if err != nil {
 		return err
 	}
-	err = convertToHLS("added_"+inputFileName+".mp4", inputFileName+".m3u8", duration)
+	err = convertToHLS("added_"+inputFileName+".mp4", inputFileName+".m3u8", duration, workDir)
 	if err != nil {
 		return err
 	}
@@ -240,14 +240,14 @@ func Mp4toHLS(inputFileName string, duration int) error {
 }
 
 // MergeTSFile merge ts file with same timestamp and reset start_time,input is names with suffix ,call in worker
-func MergeTSFile(inputFileName []string, outputFileName string, index int, stackMethod string, duration int) error {
+func MergeTSFile(inputFileName []string, outputFileName string, index int, stackMethod string, duration int, workDir string) error {
 	//xxxn.ts->merge_xxxn.ts->new_xxxn.ts
 
-	err := stackChunks(inputFileName, "merged_"+outputFileName, stackMethod)
+	err := stackChunks(inputFileName, "merged_"+outputFileName, stackMethod, workDir)
 	if err != nil {
 		return err
 	}
-	err = resetTimeStamp("merged_"+outputFileName, "new_"+outputFileName, index, float64(duration), 0)
+	err = resetTimeStamp("merged_"+outputFileName, "new_"+outputFileName, index, float64(duration), 0, workDir)
 	if err != nil {
 		return err
 	}
@@ -255,48 +255,33 @@ func MergeTSFile(inputFileName []string, outputFileName string, index int, stack
 }
 
 func NewM3u8(m3u8FilePath, newM3u8FilePath string) error {
-	// Read the content of the .m3u8 file
-	file, err := os.Open(m3u8FilePath)
+	inputFile, err := os.Open(m3u8FilePath)
 	if err != nil {
-		return fmt.Errorf("error opening .m3u8 file: %v", err)
+		return err
 	}
-	defer file.Close()
+	defer inputFile.Close()
 
-	// Create a new file to store the modified content
-	newFile, err := os.Create(newM3u8FilePath)
+	outputFile, err := os.Create(newM3u8FilePath)
 	if err != nil {
-		return fmt.Errorf("error creating new .m3u8 file: %v", err)
+		return err
 	}
-	defer newFile.Close()
+	defer outputFile.Close()
 
-	writer := bufio.NewWriter(newFile)
-
-	scanner := bufio.NewScanner(file)
+	scanner := bufio.NewScanner(inputFile)
 	for scanner.Scan() {
 		line := scanner.Text()
-		if strings.HasPrefix(line, "#EXTINF:") {
-			// Extract the duration and .ts file name
-			parts := strings.SplitN(strings.TrimSpace(line), ",", 2)
-			duration := parts[0]
-			tsFileName := parts[1]
-
-			// Add "new_" to the .ts file name
-			newTSFileName := "new_" + tsFileName
-
-			// Write the modified line to the new file
-			writer.WriteString(fmt.Sprintf("%s,%s\n", duration, newTSFileName))
-		} else {
-			// Write non-modified lines to the new file
-			writer.WriteString(line + "\n")
+		if strings.HasSuffix(line, ".ts") {
+			line = "new_" + line // Modify the line
+		}
+		_, err := outputFile.WriteString(line + "\n")
+		if err != nil {
+			return err
 		}
 	}
 
 	if err := scanner.Err(); err != nil {
-		return fmt.Errorf("error scanning .m3u8 file: %v", err)
+		return err
 	}
-
-	// Flush any buffered data to the new file
-	writer.Flush()
 
 	return nil
 }

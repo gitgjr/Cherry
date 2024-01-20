@@ -58,6 +58,7 @@ func (w *Worker) Router() {
 	http.HandleFunc("/send", w.TransmitHandler)
 	http.HandleFunc("/check", w.CheckHandler)
 	http.HandleFunc("/checkState", w.CheckStateHandler)
+	http.HandleFunc("sendFile", w.SendFile)
 	//http.HandleFunc("/transmit", w.TransmitHandler)
 
 }
