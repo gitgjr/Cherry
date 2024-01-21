@@ -148,7 +148,7 @@ func stackChunks(inputFiles []string, outputDirectory string, stackMethod string
 	args = append(args, "-c:a")
 	args = append(args, "aac")
 	args = append(args, outputDirectory)
-	err := runFFmpegCommend("ffmpeg", args, workDir)
+	err := runFFmpegCommend(args, workDir)
 	if err != nil {
 		return err
 	}
@@ -156,7 +156,7 @@ func stackChunks(inputFiles []string, outputDirectory string, stackMethod string
 }
 
 func addKeyFrame(inputFile string, outputDirectory string, duration int, workDir string) error {
-	keyint := fmt.Sprintf("keyint=[%d]:min-keyint=[%d]", duration, duration)
+	keyint := fmt.Sprintf("keyint=%d:min-keyint=%d", duration, duration)
 	args := []string{
 		"-i", inputFile,
 		"-codec:v:", "libx264",
@@ -165,7 +165,24 @@ func addKeyFrame(inputFile string, outputDirectory string, duration int, workDir
 		"-codec:a", "copy",
 		outputDirectory,
 	}
-	err := runFFmpegCommend("ffmpeg", args, workDir)
+	err := runFFmpegCommend(args, workDir)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func changeKeyFrameInterval(inputFile string, outputDirectory string, duration, FPS int, workDir string) error {
+	keyint := fmt.Sprintf("keyint=%d:scenecut=0", duration*FPS)
+	args := []string{
+		"-i", inputFile,
+		"-codec:v:", "libx264",
+		"-x264-params",
+		keyint,
+		"-codec:a", "copy",
+		outputDirectory,
+	}
+	err := runFFmpegCommend(args, workDir)
 	if err != nil {
 		return err
 	}
@@ -221,7 +238,7 @@ func resetTimeStamp(inputFile, outputDirectory string, index int, duration float
 		"-c", "copy",
 		outputDirectory,
 	}
-	runFFmpegCommend("ffmpeg", args, workDir)
+	runFFmpegCommend(args, workDir)
 	return nil
 }
 
@@ -229,6 +246,19 @@ func resetTimeStamp(inputFile, outputDirectory string, index int, duration float
 func Mp4toHLS(inputFileName string, duration int, workDir string) error {
 	//xxx.mp4->added_xxx.mp4->xxxn.ts
 	err := addKeyFrame(inputFileName+".mp4", "added_"+inputFileName+".mp4", duration, workDir)
+	if err != nil {
+		return err
+	}
+	err = convertToHLS("added_"+inputFileName+".mp4", inputFileName+".m3u8", duration, workDir)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func Mp4toHLS_2(inputFileName string, duration, FPS int, workDir string) error {
+
+	err := changeKeyFrameInterval(inputFileName+".mp4", "added_"+inputFileName+".mp4", duration, FPS, workDir)
 	if err != nil {
 		return err
 	}
