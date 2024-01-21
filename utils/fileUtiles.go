@@ -11,7 +11,7 @@ import (
 func RootPath() string {
 	_, b, _, _ := runtime.Caller(0)
 	basePath := filepath.Dir(b)
-	basePath = strings.TrimSuffix(basePath, "/utils")
+	// basePath = strings.TrimSuffix(basePath, "/utils")
 	basePath = strings.TrimSuffix(basePath, "\\utils")
 	return basePath
 }
