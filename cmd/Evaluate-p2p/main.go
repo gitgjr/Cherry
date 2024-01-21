@@ -5,7 +5,6 @@ import (
 	"main/video"
 	"main/zlog"
 	"os"
-	"slices"
 
 	"go.uber.org/zap"
 )
@@ -24,8 +23,8 @@ func main() {
 	arg2 := os.Args[2]
 	switch arg2 {
 	case "4k":
-		leftFile = "4kleft"
-		rightFile = "4kright"
+		leftFile = "4k30left"
+		rightFile = "4k30right"
 	case "1080":
 		leftFile = "1080left"
 		rightFile = "1080right"
@@ -44,35 +43,7 @@ func main() {
 			zlog.Error("mp4 to hls error", zap.Error(err))
 		}
 	case "Merge":
-		tsFileList, err := utils.FindFiles(serverPath, "", ".ts")
-		if err != nil {
-			zlog.Error("find ts file error", zap.Error(err))
-		}
-		if len(tsFileList)%2 != 0 {
-			zlog.Error("the number of ts files is not odd")
-		}
-
-		tsFileNumber := len(tsFileList) / 2
-
-		indexList := []int{}
-
-		for _, e := range tsFileList {
-			index, err := video.ExtractSerialNumber(e)
-			if err != nil {
-				zlog.Error("video index error", zap.Error(err))
-			}
-			if !slices.Contains(indexList, index) {
-				indexList = append(indexList, index)
-			}
-		}
-
-		for i := 0; i < tsFileNumber; i++ {
-			tsFilePair := video.FindTsFileByIndex(tsFileList, i)
-			err = video.MergeTSFile(tsFilePair, tsFilePair[0], i, "vstack", durationTime, serverPath)
-			if err != nil {
-				zlog.Error("merge error", zap.Error(err))
-			}
-		}
+		video.Merge_CPU(leftFile, rightFile, serverPath, durationTime)
 	}
 
 }
