@@ -11,4 +11,4 @@ mkdir Cherry/data/serverWork
 mkdir Cherry/data/p2pWork
 
 cp /resource/* /home/Cherry/data/resource
-
+cp /home/Cherry/data/resource/*  /home/Cherry/data/p2pWork
