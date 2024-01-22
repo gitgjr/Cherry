@@ -12,4 +12,3 @@ mkdir Cherry/data/p2pWork
 
 cp /resource/* /home/Cherry/data/resource
 
-echo "Cherry Initialization Complete"

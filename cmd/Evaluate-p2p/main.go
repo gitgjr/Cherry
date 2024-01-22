@@ -1,10 +1,12 @@
 package main
 
 import (
+	"fmt"
 	"main/utils"
 	"main/video"
 	"main/zlog"
 	"os"
+	"time"
 
 	"go.uber.org/zap"
 )
@@ -31,6 +33,7 @@ func main() {
 	default:
 	}
 
+	startTime := time.Now()
 	switch arg1 {
 	case "convertLeft":
 		err := video.Mp4toHLS(leftFile, durationTime, serverPath)
@@ -45,5 +48,6 @@ func main() {
 	case "Merge":
 		video.Merge_CPU(leftFile, rightFile, serverPath, durationTime)
 	}
-
+	execTime := time.Since(startTime)
+	fmt.Println("exec time is", execTime.Seconds())
 }

@@ -1,0 +1,7 @@
+check key frame interval:
+
+ffprobe -loglevel error -select_streams v:0 -show_entries packet=pts_time,flags -of csv=print_section=0 added_4kleft.mp4
+
+cut video:
+
+ffmpeg -ss 00:00:00 -to 00:00:30 -i 4krightOriginal.mp4 -c copy 4kright.mp4
