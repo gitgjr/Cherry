@@ -13,7 +13,7 @@ func main() {
 	rootPath := utils.RootPath()
 	dataPath := rootPath + "/data"
 	// resourcePath := dataPath + "resource"
-	serverPath := dataPath + "/" + "serverWork"
+	serverPath := dataPath + "/" + "p2pWork"
 	durationTime := 5
 
 	leftFile := "left"
