@@ -5,3 +5,4 @@ tar xvfz kubo_v0.25.0_linux-amd64.tar.gz
 ./kubo/install.sh
 rm kubo_v0.25.0_linux-amd64.tar.gz
 rm -R kubo
+
