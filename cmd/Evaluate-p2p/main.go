@@ -46,7 +46,7 @@ func main() {
 			zlog.Error("mp4 to hls error", zap.Error(err))
 		}
 	case "Merge":
-		video.Merge_CPU(leftFile, rightFile, serverPath, durationTime)
+		video.Merge_CPU_no_m3u8(leftFile, rightFile, serverPath, durationTime)
 	}
 	execTime := time.Since(startTime)
 	fmt.Println("exec time is", execTime.Seconds())

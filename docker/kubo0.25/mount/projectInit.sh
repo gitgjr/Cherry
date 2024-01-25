@@ -2,7 +2,7 @@
 set -ex
 apt install sudo
 sudo apt upgrade
-sudo apt -y install ffmpeg
+sudo apt install -y ffmpeg
 cd /home
 git clone https://github.com/gitgjr/Cherry.git
 mkdir Cherry/data

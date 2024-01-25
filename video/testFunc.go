@@ -77,3 +77,23 @@ func Merge_CPU(leftFile, rightFile, serverPath string, durationTime int) {
 		zlog.Error("generate m3u8 error", zap.Error(err))
 	}
 }
+
+func Merge_CPU_no_m3u8(leftFile, rightFile, serverPath string, durationTime int) {
+	tsFileList, err := utils.FindFiles(serverPath, "", ".ts")
+	if err != nil {
+		zlog.Error("find ts file error", zap.Error(err))
+	}
+	if len(tsFileList)%2 != 0 {
+		zlog.Error("the number of ts files is not odd")
+	}
+
+	tsFileNumber := len(tsFileList) / 2
+
+	for i := 0; i < tsFileNumber; i++ {
+		tsFilePair := FindTsFileByIndex(tsFileList, i)
+		err = MergeTSFile(tsFilePair, tsFilePair[0], i, "vstack", durationTime, serverPath)
+		if err != nil {
+			zlog.Error("merge error", zap.Error(err))
+		}
+	}
+}
