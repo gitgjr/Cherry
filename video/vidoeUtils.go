@@ -18,11 +18,27 @@ func FindTsFileByIndex(arr []string, x int) []string {
 	return result
 }
 
-func ExtractSerialNumber(filename string) (int, error) {
-	re := regexp.MustCompile(`left(\d+)\.ts$`)
-	matches := re.FindStringSubmatch(filename)
-	if len(matches) > 1 {
-		return strconv.Atoi(matches[1]) // matches[1] contains the first captured group
+// ExtractSerialNumbers extracts serial numbers from a slice of filenames.
+func ExtractTSPairs(filenames []string) (map[int][]string, error) {
+	tsMap := make(map[int][]string)
+
+	re := regexp.MustCompile(`(\d+)\.ts$`)
+
+	for _, filename := range filenames {
+		matches := re.FindStringSubmatch(filename)
+		if len(matches) > 1 {
+			number, err := strconv.Atoi(matches[1])
+			if err != nil {
+				return nil, err
+			}
+			tsMap[number] = append(tsMap[number], filename)
+		}
 	}
-	return 0, fmt.Errorf("no serial number found in filename")
+
+	for index, files := range tsMap {
+		if len(files)%2 != 0 {
+			return nil, fmt.Errorf("uneven file count for index %d", index)
+		}
+	}
+	return tsMap, nil
 }

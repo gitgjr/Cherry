@@ -32,8 +32,8 @@ func main() {
 
 	startTime := time.Now()
 	if arg2 != "GPU" {
-		video.Convert_CPU(leftFile, rightFile, serverPath, durationTime)
-		// video.convertCPU_2(leftFile, rightFile, serverPath, durationTime)
+		// video.Convert_CPU(leftFile, rightFile, serverPath, durationTime)
+		video.Convert_CPU_2(leftFile, rightFile, serverPath, durationTime)
 		video.Merge_CPU(leftFile, rightFile, serverPath, durationTime)
 	}
 
