@@ -13,9 +13,9 @@ docker run -t -d --name kubo-node2  -v E:\go\Distributed-meeting-recording-stora
 
 docker run -t -d --name kubo-node3  -v E:\go\Distributed-meeting-recording-storage\docker\kubo0.25\mount:/mount -v E:\go\Distributed-meeting-recording-storage\data\resource:/resource -p 4001 -p 4001/udp -p 127.0.0.1:8082:8080 -p 127.0.0.1:5003:5001  gengjieran/go-ipfs:v2.1
 
-docker run -t -d -m 2048m --cpus=1 --name kubo-node3  -v E:\go\Distributed-meeting-recording-storage\docker\kubo0.25\mount:/mount -v E:\go\Distributed-meeting-recording-storage\data\resource:/resource -p 4001 -p 4001/udp -p 127.0.0.1:8082:8080 -p 127.0.0.1:5003:5001  gengjieran/go-ipfs:v2.1
+docker run -t -d -m 6144m --cpus=3 --name kubo-node3  -v E:\go\Distributed-meeting-recording-storage\docker\kubo0.25\mount:/mount -v E:\go\Distributed-meeting-recording-storage\data\resource:/resource -p 4001 -p 4001/udp -p 127.0.0.1:8082:8080 -p 127.0.0.1:5003:5001  gengjieran/go-ipfs:v2.1
 
-docker run -t -d -m 2048m --cpus=1 --name kubo-node4  -v E:\go\Distributed-meeting-recording-storage\docker\kubo0.25\mount:/mount -v E:\go\Distributed-meeting-recording-storage\data\resource:/resource -p 4001 -p 4001/udp -p 127.0.0.1:8083:8080 -p 127.0.0.1:5004:5001  gengjieran/go-ipfs:v2.1
+docker run -t -d -m 6144m --cpus=1 --name kubo-node4  -v E:\go\Distributed-meeting-recording-storage\docker\kubo0.25\mount:/mount -v E:\go\Distributed-meeting-recording-storage\data\resource:/resource -p 4001 -p 4001/udp -p 127.0.0.1:8083:8080 -p 127.0.0.1:5004:5001  gengjieran/go-ipfs:v2.1
 
 
 docker run --hostname=51adff2096d7 --mac-address=02:42:ac:11:00:03 --env=PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin --env=SRC_DIR=/kubo --env=IPFS_PATH=/data/ipfs --env=IPFS_LOGGING= --volume=E:\go\ipfs:\home --volume=/data/ipfs -p 4001 -p 4001/udp -p 5001 -p 00:8080 -p 8081 --runtime=runc -d ipfs/kubo:latest

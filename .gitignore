@@ -23,3 +23,13 @@
 .DS_Store
 
 /rawVideo/
+
+#key file
+*.key
+
+!/docker/kubo0.25/Dockerfile
+
+#excel file
+*.xlsx
+*.xls
+

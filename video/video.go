@@ -121,7 +121,7 @@ func stackChunks(inputFiles []string, outputDirectory string, stackMethod string
 				args = append(args, "vstack")
 			}
 		}
-	case "grid": //up to 2*3,not test
+	case "2*3grid": //up to 2*3,not test
 		{
 			if n != 4 || n != 6 {
 				return errors.New("incorrect input for grid")

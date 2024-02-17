@@ -1,0 +1,5 @@
+﻿Process Unit,3Worker,8Worker,12Worker,50Worker,Server
+2Requester,10.36,9.30,9.46,9.76,13.01
+8Requester,15.29,9.52,8.86,8.95,13.37
+12Requertser,18.82,10.84,8.97,9.12,13.39
+50Requqster,52.88,23.59,18.04,9.13,13.62
